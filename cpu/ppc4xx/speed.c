@@ -288,7 +288,7 @@ ulong get_PCI_freq (void)
 	return sys_info.freqPCI;
 }
 
-#elif !defined(CONFIG_440GX) && !defined(CONFIG_440SP) && !defined(CONFIG_440SPE)
+#elif !defined(CONFIG_440GX) && !defined(CONFIG_440SP) && !defined(CONFIG_440SPE) && !defined(CONFIG_BGP)
 void get_sys_info (sys_info_t * sysInfo)
 {
 	unsigned long strp0;
@@ -319,6 +319,14 @@ void get_sys_info (sys_info_t * sysInfo)
 	sysInfo->freqOPB = sysInfo->freqPLB/sysInfo->pllOpbDiv;
 	sysInfo->freqEPB = sysInfo->freqOPB/sysInfo->pllExtBusDiv;
 
+}
+#elif defined(CONFIG_BGP)
+u32 get_processor_mhz(void);
+
+void get_sys_info (sys_info_t * sysInfo)
+{
+    u32 mhz = get_processor_mhz();
+    sysInfo->freqProcessor = mhz * 1000 * 1000;
 }
 #else
 void get_sys_info (sys_info_t * sysInfo)
@@ -906,7 +914,7 @@ ulong get_bus_freq (ulong dummy)
 
 #if defined(CONFIG_405GP) || defined(CONFIG_405CR) || \
     defined(CONFIG_405EP) || defined(CONFIG_405EZ) || \
-    defined(CONFIG_440) || defined(CONFIG_405)
+    defined(CONFIG_440) || defined(CONFIG_405) || defined(CONFIG_BGP)
 	sys_info_t sys_info;
 
 	get_sys_info (&sys_info);

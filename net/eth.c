@@ -66,6 +66,61 @@ struct eth_device *eth_get_dev(void)
 	return eth_current;
 }
 
+#ifdef CONFIG_LWIP_TCP
+/* some interface routines to the lwip library     */
+/* Eventually we can probably get rid of this stuff */
+void *
+uboot_eth_get_cur_dev_ptr(void)
+{
+    return (void *) eth_get_dev();
+}
+
+char *
+uboot_eth_dev_get_name(void *dev_ptr) 
+{
+    struct eth_device *edev = (struct eth_device *)dev_ptr;
+
+    return edev->name;
+}
+
+int
+uboot_eth_dev_send(void *dev_ptr, volatile void* packet, int len)
+{
+    struct eth_device *edev = (struct eth_device *)dev_ptr;
+    return edev->send(edev, packet, len);
+}
+
+unsigned char *
+uboot_eth_dev_get_addr(void *dev_ptr)
+{
+    struct eth_device *edev = (struct eth_device *)dev_ptr;
+    
+    return edev->enetaddr;
+}
+
+int
+uboot_eth_dev_get_addr_len(void *dev_ptr) 
+{
+    return 6;
+}
+
+void
+uboot_eth_dev_set_priv(void *dev_ptr, void *priv_data_ptr)
+{
+    struct eth_device *edev = (struct eth_device *)dev_ptr;
+
+    edev->priv = priv_data_ptr;
+}
+
+void  *
+uboot_eth_dev_get_priv(void *dev_ptr)
+{
+    struct eth_device *edev = (struct eth_device *)dev_ptr;
+
+    return edev->priv;
+}
+#endif
+
 struct eth_device *eth_get_dev_by_name(char *devname)
 {
 	struct eth_device *dev, *target_dev;

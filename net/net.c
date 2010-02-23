@@ -175,6 +175,9 @@ volatile uchar	PktBuf[(PKTBUFSRX+1) * PKTSIZE_ALIGN + PKTALIGN];
 volatile uchar *NetRxPackets[PKTBUFSRX]; /* Receive packets			*/
 
 static rxhand_f *packetHandler;		/* Current RX packet handler		*/
+#ifdef CONFIG_LWIP_TCP
+static ethhand_f *alternativeEthPktHandler;
+#endif
 static thand_f *timeHandler;		/* Current timeout handler		*/
 static ulong	timeStart;		/* Time base value			*/
 static ulong	timeDelta;		/* Current timeout value		*/
@@ -260,6 +263,68 @@ void ArpTimeoutCheck(void)
 	}
 }
 
+#ifdef CONFIG_LWIP_TCP
+/**************** An Alternative Network stack Main Loop *****************/
+extern void uboot_lwip_init(void);
+extern void uboot_lwip_init_interface(char *, char *, char *);
+extern void uboot_lwip_ethpkt_handler(volatile uchar *, int);
+extern void uboot_lwip_tmr_init(void);
+extern void uboot_lwip_tmr_process(void);
+
+int
+NetTCPLoop(void (*apps[])(void))
+{
+    bd_t *bd = gd->bd;
+    int i;
+
+    printf("TCPLoop: STARTED\n");
+
+    /* Initialize tcp/ip stack */
+    uboot_lwip_init();
+    // printf("TCPLoop: uboot_lwip_init: done\n");
+    /* setup tcpip stack to handle all incoming packets */
+    NetSetAlternateEthPktHandler(uboot_lwip_ethpkt_handler); 
+    // printf("TCPLoop: uboot_lwip_init: altpackethandlerinstalled\n");
+    /* start ethernet device */
+    eth_halt();
+    // printf("TCPLoop: uboot_lwip_init: eth halted\n");
+#ifdef CONFIG_NET_MULTI
+    eth_set_current();
+#endif
+    if (eth_init(bd) < 0) {
+        eth_halt();
+        return(-1);
+    }
+    // printf("TCPLoop: uboot_lwip_init: eth_init called\n");
+    /* bring up tcp interface */
+    uboot_lwip_init_interface(getenv("ipaddr"), getenv("gatewayip"), 
+                              getenv("netmask"));
+    // printf("TCPLoop: uboot_lwip_init: lwip_init_interface\n");
+    i=0;
+    while (apps[i]) {
+//        printf("starting : tcp app %d:%p\n",i, apps[i]);
+        apps[i]();
+        i++;
+//        printf("TCPLoop: uboot_lwip_init: app[%d] started\n",i);
+    }
+
+    uboot_lwip_tmr_init();
+    // printf("TCPLoop: uboot_lwip_init: lwip_tmr_init called\n");
+    for (;;) {
+        WATCHDOG_RESET();
+        /*
+         *	Check the ethernet for a new packet.  The ethernet
+         *	receive routine will process it.
+         */
+        eth_rx();
+
+        /* update and process all timers */
+        uboot_lwip_tmr_process();
+    }
+    
+    printf("TCPLoop: End\n");
+}
+#endif  /* CONFIG_LWIP_TCP */
 /**********************************************************************/
 /*
  *	Main network processing loop.
@@ -275,6 +340,7 @@ NetLoop(proto_t protocol)
 	NetDevExists = 0;
 #endif
 
+        
 	/* XXX problem with bss workaround */
 	NetArpWaitPacketMAC = NULL;
 	NetArpWaitTxPacket = NULL;
@@ -349,7 +415,14 @@ restart:
 #endif
 		case NETCONS:
 		case TFTP:
+                    if (strcmp(getenv("serverip"), "0.0.0.0") == 0) {
+                        /* we special case a serverip setting 0.0.0.0 */
+                        /* to allow for the use of explicitly named server */
+                        /* addresses in the file name */
+                        NetServerIP = 1;
+                    } else {
 			NetServerIP = getenv_IPaddr ("serverip");
+                    }
 			break;
 #if (CONFIG_COMMANDS & CFG_CMD_PING)
 		case PING:
@@ -616,6 +689,13 @@ NetSetHandler(rxhand_f * f)
 	packetHandler = f;
 }
 
+#ifdef CONFIG_LWIP_TCP
+void
+NetSetAlternateEthPktHandler(ethhand_f * f)
+{
+    alternativeEthPktHandler = f;
+}
+#endif
 
 void
 NetSetTimeout(ulong iv, thand_f * f)
@@ -1149,6 +1229,13 @@ NetReceive(volatile uchar * inpkt, int len)
 	printf("packet received\n");
 #endif
 
+#ifdef CONFIG_LWIP_TCP
+        if (alternativeEthPktHandler) {
+//            printf(":");
+            return (*alternativeEthPktHandler)(inpkt,len);
+        }
+#endif
+            
 	NetRxPkt = inpkt;
 	NetRxPktLen = len;
 	et = (Ethernet_t *)inpkt;
@@ -1537,10 +1624,10 @@ static int net_check_prereq (proto_t protocol)
 #endif
 	case NETCONS:
 	case TFTP:
-		if (NetServerIP == 0) {
-			puts ("*** ERROR: `serverip' not set\n");
-			return (1);
-		}
+               if (NetServerIP == 0) {
+                   puts ("*** ERROR: `serverip' not set\n");
+                   return (1);
+               }
 #if (CONFIG_COMMANDS & (CFG_CMD_PING | CFG_CMD_SNTP))
     common:
 #endif

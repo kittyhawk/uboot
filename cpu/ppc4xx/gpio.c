@@ -88,6 +88,7 @@ void gpio_config(int pin, int in_out, int gpio_alt, int out_val)
 }
 #endif /* GPIO_OSRL */
 
+#ifdef GPIO0_OR
 void gpio_write_bit(int pin, int val)
 {
 	u32 offs = 0;
@@ -102,6 +103,7 @@ void gpio_write_bit(int pin, int val)
 	else
 		out32(GPIO0_OR + offs, in32(GPIO0_OR + offs) & ~GPIO_VAL(pin));
 }
+#endif /* GPIO0 */
 
 #if defined(CFG_440_GPIO_TABLE)
 void gpio_set_chip_configuration(void)

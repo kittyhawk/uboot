@@ -1,0 +1,76 @@
+# my overrides
+echo " --- JA : Settings : BEGIN ---"
+setenv watson 1
+
+if itest $watson == 1
+then
+#  setenv ioeth0ipaddr "172.24.128.$bgp_nodecard"
+#  setenv ioeth0mask "$bgp_ioeth_netmask"
+#  setenv ioeth1ipaddr "192.168.$bgp_nodecard.1"
+#  setenv ioeth1mask "255.255.255.0"
+#  setenv iogateway $bgp_ioeth_nfsserver
+setenv ioeth0ipaddr $bgp_ioeth_ip
+setenv ioeth0mask $bgp_ioeth_netmask
+
+  
+#  setenv cneth0ipaddr "192.168.$bgp_nodecard.$bgp_computecard"
+#  setenv cneth0mask "255.255.255.0"
+  setenv cneth0ipaddr "172.24.128.$bgp_computecard"
+  setenv cneth0mask "255.255.0.0"
+  setenv cneth1ipaddr $ipaddr
+  setenv cneth1mask $netmask
+
+#  setenv cngateway "192.168.$bgp_nodecard.1"
+  setenv cngateway 172.24.1.1
+else
+  #need to determine io node settings
+
+  setenv cneth0ipaddr $ipaddr
+  setenv cneth0mask $netmask
+  setenv cneth1ipaddr "192.168.$bgp_psetnum.$bgp_rankinpset"
+  setenv cneth1mask "255.255.255.0"
+fi
+
+if itest $bgp_isio == 1 
+then
+  setenv setenv doboot run boot
+#  setenv doionode "setenv bootargs console=bgcons ip=$ioeth0ipaddr::$iogateway:$ioeth0mask::eth0:off init=/init khbr=off; echo doionode done"
+  setenv doionode "setenv bootargs console=bgcons khbr=:::$ioeth0ipaddr:$iogateway: init=/init; echo doionode done"
+#  setenv eth0 "$ioeth0ipaddr $ioeth0mask"
+#  setenv eth1 "$ioeth1ipaddr $ioeth1mask"
+else
+  if itest $bgp_rank == 0 
+  then
+     mketh 1 0
+     fdt print /plb/ethernet@0
+     setenv ramfsarg $ramfsaddr
+     setenv bootargs console=bgcons init=/init ip=$cneth0ipaddr:$serverip:$cngateway:$cneth0mask::eth0:off khbr=off
+     setenv eth0 "$cneth0ipaddr $cneth0mask"   
+     setenv eth1 "$cneth1ipaddr $cneth1mask"
+     setenv doramdisk run boot
+     echo "$bgp_location: configured to boot ramdisk for khctrl server with eth1: $eth1 "
+  else
+     setenv bgtty_dest 0
+     setenv doramdisk 
+  fi
+fi
+
+if itest $bgp_isio == 0
+then
+  setenv watip "192.168.$bgp_nodecard.$bgp_computecard"
+  setenv watmask "255.255.255.0"
+  setenv watgate "192.168.$bgp_nodecard.1"
+
+  setenv dojaro 'setenv ramfsarg - && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest ip=$watip:$serverip:$watgate:$watmask::eth0:off ro root=/dev/nfs nfsroot=172.24.1.1:/bgsys/kittyhawk/ro/jaetch,proto=tcp init=/init'
+  setenv dojarw 'setenv ramfsarg - && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest ip=$watip:$serverip:$watgate:$watmask::eth0:off ro root=/dev/nfs nfsroot=172.24.1.1:/bgsys/kittyhawk/rw/jaetch,proto=tcp init=/init' 
+  setenv dojaram 'setenv ramfsarg $ramfsaddr && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest init=/init ip=$watip:$serverip:$watgate:$watmask::eth0:off khbr=off'
+
+  setenv jboot "run dojaro && run boot"
+fi
+
+echo "updated version 3.0"
+
+
+
+
+echo " --- JA : Settings : END ---"

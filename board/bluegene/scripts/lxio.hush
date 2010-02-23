@@ -1,0 +1,4 @@
+# IO node Linux booting via NFS and DHCP
+
+setenv nfsroot '172.24.1.1:/bgsys/kittyhawk/ro/aoe-vblade'
+setenv doionode 'setenv doboot run boot; setenv bootargs console=bgcons ip=:::::eth0:dhcp init=/init nfsroot=$nfsroot,proto=tcp,nolock'

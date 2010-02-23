@@ -94,6 +94,29 @@ U_BOOT_CMD(
 );
 #endif	/* CFG_CMD_NFS */
 
+#if (CONFIG_COMMANDS & CONFIG_LWIP_TCP)
+extern void uboot_lwip_echo_init(void);
+extern void httpd_init(void);
+
+int do_tcp (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+    void (*apps[3])(void);
+
+    /* do this at run  time to get pointers right after relocate */
+    apps[0] = uboot_lwip_echo_init;
+    apps[1] = httpd_init;
+    apps[2] = NULL;
+
+    NetTCPLoop(apps);
+    return -1;
+}
+
+U_BOOT_CMD(
+	tcp,	1,	1,	do_tcp,
+	"tcp\n",
+);
+#endif  /* CFG_LWIP_TCP */
+
 static void netboot_update_env (void)
 {
 	char tmp[22];

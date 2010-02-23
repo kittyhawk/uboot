@@ -55,12 +55,16 @@ int do_bootelf (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	printf ("## Starting application at 0x%08lx ...\n", addr);
 
+#ifdef CFG_INIT_DCACHE_CS
 	/*
 	 * QNX images require the data cache is disabled.
 	 * Data cache is already flushed, so just turn it off.
 	 */
 	if (dcache_status ())
 		dcache_disable ();
+#endif
+
+	disable_interrupts();
 
 	/*
 	 * pass address parameter as argv[0] (aka command name),
@@ -220,6 +224,26 @@ int do_bootvx (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 /* ======================================================================
+ * Interpreter command to boot an arbitrary ELF image from memory.
+ * ====================================================================== */
+int do_loadelf (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	unsigned long addr;		/* Address of the ELF image     */
+
+	if (argc < 2)
+		addr = load_addr;
+	else
+		addr = simple_strtoul (argv[1], NULL, 16);
+
+	if (!valid_elf_image (addr))
+		return 1;
+
+	addr = load_elf_image (addr);
+
+	return 0;
+}
+
+/* ======================================================================
  * Determine if a valid ELF image exists at the given memory location.
  * First looks at the ELF header magic field, the makes sure that it is
  * executable and makes sure that it is for a PowerPC.
@@ -254,7 +278,7 @@ int valid_elf_image (unsigned long addr)
 	return 1;
 }
 
-
+#if 0
 /* ======================================================================
  * A very simple elf loader, assumes the image is valid, returns the
  * entry point address.
@@ -310,8 +334,57 @@ unsigned long load_elf_image (unsigned long addr)
 
 	return ehdr->e_entry;
 }
+#else
+unsigned long load_elf_image (unsigned long addr)
+{
+	Elf32_Ehdr *ehdr;		/* Elf header structure pointer     */
+	Elf32_Phdr *phdr;		/* Program header structure pointer */
+	int i;				/* Loop counter                     */
+
+	/* -------------------------------------------------- */
+
+	ehdr = (Elf32_Ehdr *) addr;
+
+	/* Find the section header string table for output info */
+	if (ehdr->e_phoff == 0) {
+	    printf("  Incorrect PHDR table offset\n");
+	    return 0;
+	}
+	
+	/* Load each appropriate section */
+	for (i = 0; i < ehdr->e_phnum; i++) {
+		void *src_start, *dst_start;
+
+		phdr = (Elf32_Phdr *) (addr + ehdr->e_phoff + 
+				       (ehdr->e_phentsize * i));
+
+		if (phdr->p_type != PT_LOAD)
+			continue;
+
+		src_start = (void*)(addr + phdr->p_offset);
+		dst_start = (void *)phdr->p_paddr;
+
+		printf (" (%p-%p) -> %p-%p\n",
+			src_start, src_start + phdr->p_memsz,
+			dst_start, dst_start + phdr->p_memsz);
+
+		memcpy(dst_start, src_start, phdr->p_filesz);
+		memset(dst_start + phdr->p_filesz, 0, phdr->p_memsz - phdr->p_filesz);
+		flush_cache ((unsigned long)dst_start, phdr->p_memsz);
+	}
+
+	return ehdr->e_entry;
+}
+#endif
 
 /* ====================================================================== */
+U_BOOT_CMD(
+	loadelf,      2,      0,      do_loadelf,
+	"loadelf - Loads an ELF image in memory\n",
+	" [address] - load address of ELF image.\n"
+);
+
+
 U_BOOT_CMD(
 	bootelf,      2,      0,      do_bootelf,
 	"bootelf - Boot from an ELF image in memory\n",

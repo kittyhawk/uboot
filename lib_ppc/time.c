@@ -87,8 +87,14 @@ int init_timebase (void)
 	immap->im_sitk.sitk_tbk = KAPWR_KEY;
 #endif
 
+#if !defined(CONFIG_BGP)
 	/* reset */
 	asm ("li 3,0 ; mttbu 3 ; mttbl 3 ;");
+#else
+	/* On bluegene, we want to preserve the synchronized timebases we
+	 * inherit at block-boot time, so don't reset.
+	 */
+#endif
 
 #if defined(CONFIG_5xx) || defined(CONFIG_8xx)
 	/* enable */

@@ -1,0 +1,12 @@
+echo " --- $bgp_location: startscript.hush : BEGIN ---"
+
+setenv startscriptload "nfs"
+setenv startscriptserver "172.24.1.1"
+setenv startscriptprefix "/bgsys/kittyhawk/rw/boot/scripts/startscript"
+
+# setting dostartscript causes this behaviour to be run prior to main logic
+
+setenv dostartscript "$startscriptload $startscriptaddr $startscriptserver:$startscriptprefix.$bgp_location && imi $startscriptaddr && autoscr $startscriptaddr"
+
+
+echo " --- $bgp_location: startscript.hush : END ---"

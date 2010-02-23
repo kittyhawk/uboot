@@ -1,0 +1,16 @@
+# my overrides
+echo " --- VU : Settings : BEGIN ---"
+
+#setenv startscriptprefix /bgsys/kittyhawk/rw/boot/vuhlig/scripts/startscript
+setenv fdtbootaddr "0x2000000"
+
+setenv doconfig
+setenv dostartscript
+setenv doboot "imi $loadaddr && echo bootm $loadaddr - $fdtbootaddr && bootm $loadaddr - $fdtbootaddr"
+
+echo FDT boot addr=$fdtbootaddr
+
+fdt move $fdtdefaultaddr $fdtbootaddr $fdttotalsize
+fdt addr $fdtbootaddr
+
+echo "--- VU: Done ---"

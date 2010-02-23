@@ -154,6 +154,14 @@
 	bl	board_init_f
 #endif
 
+#if defined(CONFIG_BGP)
+	.text
+	.globl _start_bg
+_start_bg:
+	mtspr	sprg1,r3
+	b	_start_440
+#endif
+
 /*
  * 440 Startup -- on reset only the top 4k of the effective
  * address space is mapped in by an entry in the instruction
@@ -199,7 +207,7 @@ _start_440:
 	mtspr	csrr0,r0
 	mtspr	csrr1,r0
 	/* NOTE: 440GX adds machine check status regs */
-#if defined(CONFIG_440) && !defined(CONFIG_440GP)
+#if defined(CONFIG_440) && !defined(CONFIG_440GP) && !defined(CONFIG_BGP)
 	mtspr	mcsrr0,r0
 	mtspr	mcsrr1,r0
 	mfspr	r1,mcsr
@@ -209,6 +217,7 @@ _start_440:
 	/*----------------------------------------------------------------*/
 	/* CCR0 init */
 	/*----------------------------------------------------------------*/
+#if !defined(CONFIG_BGP)
 	/* Disable store gathering & broadcast, guarantee inst/data
 	* cache block touch, force load/store alignment
 	* (see errata 1.12: 440_33)
@@ -216,6 +225,7 @@ _start_440:
 	lis	r1,0x0030	/* store gathering & broadcast disable */
 	ori	r1,r1,0x6000	/* cache touch */
 	mtspr	ccr0,r1
+#endif
 
 	/*----------------------------------------------------------------*/
 	/* Initialize debug */
@@ -294,6 +304,7 @@ skip_debug_init:
 	li	r1,0x2000
 	mtspr	ivor15,r1	/* Debug */
 
+#ifndef CONFIG_BGP	
 	/*----------------------------------------------------------------*/
 	/* Configure cache regions  */
 	/*----------------------------------------------------------------*/
@@ -381,7 +392,7 @@ rsttlb:	tlbwe	r0,r1,0x0000	/* Invalidate all entries (V=0)*/
 	tlbwe	r2,r4,2		/* TLB Word 2 */
 	addi	r4,r4,1		/* Next TLB */
 	bdnz	1b
-
+#endif
 	/*----------------------------------------------------------------*/
 	/* Continue from 'normal' start */
 	/*----------------------------------------------------------------*/
@@ -518,7 +529,7 @@ _start:
 #endif /* CFG_INIT_RAM_DCACHE */
 
 	/* 440EP & 440GR are only 440er PPC's without internal SRAM */
-#if !defined(CONFIG_440EP) && !defined(CONFIG_440GR)
+#if !defined(CONFIG_440EP) && !defined(CONFIG_440GR) && !defined(CONFIG_BGP)
 	/* not all PPC's have internal SRAM usable as L2-cache */
 #if defined(CONFIG_440GX) || defined(CONFIG_440SP) || defined(CONFIG_440SPE)
 	mtdcr	l2_cache_cfg,r0		/* Ensure L2 Cache is off */
@@ -565,6 +576,12 @@ _start:
 	mtdcr	isram0_sb1cr,r0		/* Disable bank 1 */
 #endif
 #endif /* #if !defined(CONFIG_440EP) && !defined(CONFIG_440GR) */
+
+#if defined(CONFIG_BGP)
+	mfspr	r1,pir
+	cmpwi	r1,0
+	bne	spin_app_processor
+#endif
 
 	/*----------------------------------------------------------------*/
 	/* Setup the stack in internal SRAM */
@@ -1139,6 +1156,7 @@ crit_return:
 	rfci
 #endif /* CONFIG_NAND_SPL */
 
+#ifndef CONFIG_BGP
 /* Cache functions.
 */
 invalidate_icache:
@@ -1236,6 +1254,7 @@ dcache_status:
 	mfdccr	r3
 	srwi	r3, r3, 31	/* >>31 => select bit 0 */
 	blr
+#endif /* CONFIG_BGP */
 
 	.globl get_pvr
 get_pvr:
@@ -1495,7 +1514,6 @@ relocate_code:
 	blr				/* NEVER RETURNS! */
 
 in_ram:
-
 	/*
 	 * Relocation Function, r14 point to got2+0x8000
 	 *

@@ -110,7 +110,7 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	/********************************************************************
 	 * Move the fdt
 	 ********************************************************************/
-	} else if (op == 'm') {
+	} else if (op == 'm' && argv[1][1] == 'o') {
 		struct fdt_header *newaddr;
 		int  len;
 		int  err;
@@ -145,6 +145,41 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			return 1;
 		}
 		fdt = newaddr;
+
+	/********************************************************************
+	 * mknode 
+	 ********************************************************************/
+	} else if (op == 'm' && argv[1][1] == 'k') {
+		char *pathp = argv[2];
+		char *node = argv[3];
+		int nodeoffset;
+
+		if (argc != 4) {
+			printf ("Usage:\n%s\n", cmdtp->usage);
+			return 1;
+		}
+			
+		/*
+		 * See if the node already exists
+		 */
+		if (strcmp(pathp, "/") == 0)
+			nodeoffset = 0;
+		else
+			nodeoffset = fdt_path_offset (fdt, pathp);
+
+		if (nodeoffset < 0) {
+			printf("parent node %s doesn't exist\n", pathp);
+			return 1;
+		}
+
+		/*
+		 * Create the new node
+		 */
+		nodeoffset = fdt_add_subnode(fdt, nodeoffset, node);
+		if (nodeoffset < 0) {
+			printf("libfdt: %s\n", fdt_strerror(nodeoffset));
+			return 1;
+		}
 
 	/********************************************************************
 	 * Set the value of a node in the fdt.
@@ -187,10 +222,7 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			}
 		}
 		nodep = fdt_getprop (fdt, nodeoffset, prop, &oldlen);
-		if (oldlen < 0) {
-			printf ("libfdt %s\n", fdt_strerror(oldlen));
-			return 1;
-		} else if (oldlen == 0) {
+		if (oldlen == 0) {
 			/*
 			 * The specified property has no value
 			 */
@@ -438,18 +470,20 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	} else if (op == 'c') {
 		fdt_chosen(fdt, 0, 0, 1);
 
+#ifdef CONFIG_OF_HAS_UBOOT_ENV
 	/********************************************************************
 	 * Create a u-boot-env node
 	 ********************************************************************/
 	} else if (op == 'e') {
 		fdt_env(fdt);
-
+#endif 
+#ifdef CONFIG_OF_HAS_BD_T
 	/********************************************************************
 	 * Create a bd_t node
 	 ********************************************************************/
 	} else if (op == 'b') {
 		fdt_bd_t(fdt);
-
+#endif
 	/********************************************************************
 	 * Unrecognized command
 	 ********************************************************************/

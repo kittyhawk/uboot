@@ -1,0 +1,241 @@
+ramdisk: /memreserve/ 0 0;		/* place holder for ramdisk */
+
+/*
+ * Device Tree for Bluegene/P
+ */
+
+/ {
+	#address-cells = <2>;
+	#size-cells = <1>;
+	model = "ibm,bluegene/p";
+	compatible = "ibm,bluegene/p";
+	dcr-parent = <&/cpus/PowerPC,450@0>;
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		PowerPC,450@0 {
+			device_type = "cpu";
+			reg = <0>;
+			clock-frequency = <32A9F880>;    // 850MHz
+			timebase-frequency = <32A9F880>; // 850MHz
+			i-cache-line-size = <32>;
+			d-cache-line-size = <32>;
+			i-cache-size = <8000>; /* 32 kB */
+			d-cache-size = <8000>; /* 32 kB */
+			dcr-controller;
+			dcr-access-method = "native";
+		};
+
+		PowerPC,450@1 {
+			device_type = "cpu";
+			reg = <1>;
+			clock-frequency = <32A9F880>;    // 850MHz
+			timebase-frequency = <32A9F880>; // 850MHz
+			i-cache-line-size = <32>;
+			d-cache-line-size = <32>;
+			i-cache-size = <8000>; /* 32 kB */
+			d-cache-size = <8000>; /* 32 kB */
+			dcr-controller;
+			dcr-access-method = "native";
+		};
+
+		PowerPC,450@2 {
+			device_type = "cpu";
+			reg = <2>;
+			clock-frequency = <32A9F880>;    // 850MHz
+			timebase-frequency = <32A9F880>; // 850MHz
+			i-cache-line-size = <32>;
+			d-cache-line-size = <32>;
+			i-cache-size = <8000>; /* 32 kB */
+			d-cache-size = <8000>; /* 32 kB */
+			dcr-controller;
+			dcr-access-method = "native";
+		};
+
+		PowerPC,450@3 {
+			device_type = "cpu";
+			reg = <3>;
+			clock-frequency = <32A9F880>;    // 850MHz
+			timebase-frequency = <32A9F880>; // 850MHz
+			i-cache-line-size = <32>;
+			d-cache-line-size = <32>;
+			i-cache-size = <8000>; /* 32 kB */
+			d-cache-size = <8000>; /* 32 kB */
+			dcr-controller;
+			dcr-access-method = "native";
+		};
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0 0 0>; // Filled in by uBoot
+	};
+
+	scratch-memory {
+		device_type = "edram";
+		reg = <00000004 00000000 00800000>;
+	};
+
+	zero-memory {
+		device_type = "zero-memory";
+		reg = <00000005 00000000 00010000>;
+	};
+
+	BGIC: interrupt-controller {
+		#address-cells = <2>;
+		#size-cells = <1>;
+		#interrupt-cells = <1>;
+		compatible = "ibm,bgic";
+		interrupt-controller;
+		cell-index = <0>;
+		reg = <00000007 30000000 00001000>;
+		interrupts = <140>; // 10 groups of 32 interrupts
+	};
+
+	upc {
+		// universal performance counters
+		compatible = "ibm,bgp-upc";
+		reg = <	00000007 10000000 1000	 // data
+			00000007 10001000 1000>; // control
+		interrupts = <>;
+	};
+
+	plb {
+		compatible = "ibm,plb4";
+		#address-cells =<2>;
+		#size-cells = <1>;
+		TREE0: tree {
+			#interrupt-cells = <1>;
+			compatible = "ibm,bgp-tree";
+			dcr-reg = <c00 80>;
+			interrupts = <
+				b4				// Inject Exception
+				b5				// Receive Exception
+				b6 b7				// Receive IRQ VC0/VC1
+				a0				// CRNI timeout
+				a1				// no-target trap
+				a2				// ALU overflow
+				a3				// Local client inject exc
+				a4				// Receive exception
+				a5 a6 a7			// CH0 send write full, ECC, link CRC
+				a8 a9 aa			// CH1 send write full, ECC, link CRC
+				ab ac ad			// CH2 send write full, ECC, link CRC
+				ae af				// CH0 rcv ECC, link CRC
+				b0 b1				// CH1 rcv ECC, link CRC
+				b2 b3>;				// CH2 rcv ECC, link CRC */
+
+			interrupt-parent = <&BGIC>;
+			reg = <00000006 10000000 00000400 00000006 11000000 00000400>;
+			nodeid = <0>;				// filled in
+			routes = <0 0 0 0 0 0 0 0>;		// filled in
+		};
+
+		TORUS0: torus {
+			#interrupt-cells = <1>;
+			compatible = "ibm,bgp-torus";
+			dcr-reg = <c80 180>; // Torus + DMA
+			interrupts = <
+				20 				// torus fatal error 0
+				21 22 23 24 25 26 27 28 29 2a	// torus count thresh 1-20
+				2b 2c 2d 2e 2f 30 31 32 33 34
+								// unused 21
+				36 37 38 39 3a 3b 3c 3d 3e	// dma count thresh 22-30
+				3f				// dma fatal error 31
+				40 41 42 43 44 45 46 47		// inj fifo watermark 0-7
+				48 49 4a 4b 4c 4d 4e 4f 50 51	// rcv fifo watermark 8-21
+				52 53 54 55
+				56 57				// invalid read group 0/1 22/23
+				58 59 5a 5b			// inj fifo thresh 24-27
+				5c 5d 5e 5f			// rcv fifo thresh 28-31
+				60 61 62 63			// inj counter zero 32-35
+				64 65 66 67			// rec counter zero 36-39
+				68 69 6a 6b			// inj counter error 40-43
+				6c 6d 6e			// rec counter error 44-46
+				6f 70 71 72 73 74		// DMA write error 47-52
+				75				// link check pkt 53
+				76 77 78 79>;			// DD2 error 54-57
+				 
+			interrupt-parent = <&BGIC>;
+			reg = <	00000006 00000000 4000		// DMA
+				00000006 01140000 8000		// FIFO0
+				00000006 01150000 8000>;	// FIFO1
+			coordinates = <0 0 0>; // filled in
+		};
+
+		MAL0: mcmal {
+			compatible = "ibm,tomal";
+			dcr-reg = <180 62>;
+			num-tx-chans = <2>;
+			num-rx-chans = <2>;
+			interrupts = <100 101>; // tomal0, 1
+			interrupt-parent = <&BGIC>;
+			reg = <00000007 20000000 4000>;
+			#interrupt-cells = <1>;
+			#address-cells = <0>;
+			#size-cells = <0>;
+		};
+
+		/* BG internal networks */
+		ethernet@0 {
+			linux,network-index = <1>;
+			device_type = "network";
+			compatible = "ibm,kittyhawk";
+			tree-device = <&TREE0>;
+			tree-route = <0>;
+			tree-channel = <0>;
+			network-id = <1>;
+			link-protocol = <1>;
+		};
+
+
+		tty {
+			device_type = "tty";
+			compatible = "ibm,kittyhawk";
+			num = <256>;
+			link-protocol = <10>;
+			tree-device = <&TREE0>;
+			tree-route = <f>;
+			tree-channel = <0>;
+			torus-device = <&TORUS0>;
+		};
+
+		opb {
+			compatible = "ibm,opb";
+			clock-frequency = <85>;
+			#address-cells = <2>;
+			#size-cells = <1>;
+
+			XGMII0: emac-xgmii@720000000 {
+				compatible = "ibm,xgmii";
+				reg = <00000007 20005000 20>;
+			};
+
+			EMAC0: ethernet@720004000 {
+				linux,network-index = <0>;
+				device_type = "network";
+				compatible = "ibm,xemac";
+				interrupt-parent = <&BGIC>;
+				interrupts = <120>;
+				reg = <000000007 20004000 1000>;
+				mal-device = <&MAL0>;
+				mal-tx-channel = <0 1>;
+				mal-rx-channel = <0>;
+				cell-index = <0>;
+				max-frame-size = <233a>;
+				rx-fifo-size = <2000>;
+				tx-fifo-size = <2000>;
+				phy-mode = "xgmii";
+				phy-map = <0000000a>; /* mask optical slaves */
+				xgmii-device = <&XGMII0>;
+				xgmii-channel = <0>;
+			};
+		};
+	};
+
+	jtag {
+		#address-cells = <2>;
+		#size-cells = <1>;
+	};
+};

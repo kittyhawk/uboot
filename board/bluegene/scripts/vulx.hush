@@ -1,0 +1,13 @@
+# my overrides
+
+setenv conip 172.24.1.1
+setenv conport 50${bgp_nodecard}${bgp_computecard}
+#setenv conport 6666
+setenv ncip $conip:$conport
+#setenv stdout nc
+#setenv stdin nc
+
+setenv predhcpsleep 30
+setenv bootfileload tftp
+setenv bootfile /vuhlig/uImage
+setenv dostartscript 'setenv bootargs console=bgcons lpj=8500000 ip=$ipaddr::$gatewayip:$netmask::eth0:off root=/dev/nfs nfsroot=172.24.1.1:/bgsys/kittyhawk/ro/aoe-vblade,nolock,proto=tcp init=/init netconsole=6665@$ipaddr/,$conport@$conip/00:80:46:00:00:20'

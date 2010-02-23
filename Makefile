@@ -34,6 +34,7 @@ HOSTARCH := $(shell uname -m | \
 	    -e s/arm.*/arm/ \
 	    -e s/sa110/arm/ \
 	    -e s/powerpc/ppc/ \
+	    -e s/ppc64/ppc/ \
 	    -e s/macppc/ppc/)
 
 HOSTOS := $(shell uname -s | tr '[:upper:]' '[:lower:]' | \
@@ -223,7 +224,9 @@ LIBS += $(shell if [ -d post/board/$(BOARDDIR) ]; then echo \
 	"post/board/$(BOARDDIR)/libpost$(BOARD).a"; fi)
 LIBS += common/libcommon.a
 LIBS += libfdt/libfdt.a
-
+ifeq ($(CONFIG_LWIP_TCP),y)
+LIBS += lib_lwip/liblwip.a
+endif
 LIBS := $(addprefix $(obj),$(LIBS))
 .PHONY : $(LIBS)
 
@@ -1037,6 +1040,9 @@ ASH405_config:	unconfig
 
 bamboo_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx bamboo amcc
+
+bgp_config: unconfig
+	@$(MKCONFIG) $(@:_config=) ppc ppc4xx bgp bluegene
 
 bubinga_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx bubinga amcc

@@ -140,7 +140,7 @@ int fdt_chosen(void *fdt, ulong initrd_start, ulong initrd_end, int force)
 		printf("libfdt: %s\n", fdt_strerror(err));
 #endif
 
-	nodeoffset = fdt_path_offset (fdt, "/cpus");
+	nodeoffset = fdt_path_offset (fdt, "/cpus/" OF_CPU);
 	if (nodeoffset >= 0) {
 		clock = cpu_to_be32(bd->bi_intfreq);
 		err = fdt_setprop(fdt, nodeoffset, "clock-frequency", &clock, 4);

@@ -35,6 +35,7 @@
 #include <ppc_asm.tmpl>
 #include <commproc.h>
 #include "vecnum.h"
+#include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -67,6 +68,10 @@ void uic2_interrupt( void * parms); /* UIC2 handler */
 static struct irq_action irq_vecs3[32]; /* For UIC3 */
 void uic3_interrupt( void * parms); /* UIC3 handler */
 #endif /* CONFIG_440SPE */
+
+#if defined(CONFIG_BGP)
+static struct irq_action bg_irq_vecs[512];
+#endif
 
 #endif /* CONFIG_440 */
 
@@ -173,7 +178,7 @@ int interrupt_init_cpu (unsigned *decrementer_count)
 	set_evpr(0x00000000);
 
 #if defined(CONFIG_440)
-#if !defined(CONFIG_440GX)
+#if !defined(CONFIG_440GX) && !defined(CONFIG_BGP)
 	/* Install the UIC1 handlers */
 	irq_install_handler(VECNUM_UIC1NC, uic1_interrupt, 0);
 	irq_install_handler(VECNUM_UIC1C, uic1_interrupt, 0);
@@ -285,6 +290,87 @@ void external_interrupt(struct pt_regs *regs)
 
 	return;
 } /* external_interrupt CONFIG_440SPE */
+
+#elif defined(CONFIG_BGP)
+
+#include <ppc450.h>
+
+#define BGP_MAX_CORE		4
+#define IRQ_TO_GROUP(irq)	((irq >> 5) & 0xf)
+#define GROUP_TO_IRQ(group)	(group << 5)
+#define IRQ_OF_GROUP(irq)	((irq & 0x1f))
+#define irq_ctrl		((struct bg_irqctrl*)CFG_IRQCTRL_BASE)
+
+struct bg_irqctrl_group {
+	unsigned int status;		// status (read and write) 0
+	unsigned int rd_clr_status;	// status (read and clear) 4
+	unsigned int status_clr;	// status (write and clear)8
+	unsigned int status_set;	// status (write and set) c
+	
+	// 4 bits per IRQ
+	unsigned int target_irq[4];	// target selector 10-20
+	
+	unsigned int noncrit_mask[BGP_MAX_CORE];// mask 20-30
+	unsigned int crit_mask[BGP_MAX_CORE];	// mask 30-40
+	unsigned int mchk_mask[BGP_MAX_CORE];	// mask 40-50
+	
+	unsigned char __align[0x80 - 0x50];
+} __attribute__((packed));
+
+struct bg_irqctrl {
+	struct bg_irqctrl_group groups[15];
+	unsigned int core_non_crit[BGP_MAX_CORE];
+	unsigned int core_crit[BGP_MAX_CORE];
+	unsigned int core_mchk[BGP_MAX_CORE];
+} __attribute__((packed));
+
+static void bgp_set_irq(int irq, int enable)
+{
+	unsigned offset = ((7 - (irq & 0x7)) * 4);
+	unsigned target = enable ? 4 : 0;	// 4 = non crit, core0
+	void *reg = (void*)&irq_ctrl->groups[IRQ_TO_GROUP(irq)].target_irq[IRQ_OF_GROUP(irq) / 8];
+	out_be32(reg, (in_be32(reg) & ~(0xf << offset)) | ((target & 0xf) << offset));
+
+	invalidate_dcache_line(reg);
+}
+
+static void bgp_ack_irq(int irq)
+{
+	unsigned mask = 1U << (31 - IRQ_OF_GROUP(irq));
+	void *reg = (void*)&irq_ctrl->groups[IRQ_TO_GROUP(irq)].status_clr;
+	out_be32(reg, mask);
+	sync();
+	invalidate_dcache_line(reg);
+}
+
+void external_interrupt(struct pt_regs *regs)
+{
+	int group = -1, vec = -1;
+	unsigned long hierarchy, mask = 0;
+	int cpu = 0;
+
+	while( (hierarchy = in_be32(&irq_ctrl->core_non_crit[cpu])) != 0)
+	{
+
+		// ffs is in little endian format...
+		group = BITS_PER_LONG - ffs(hierarchy);
+
+		mask = in_be32(&irq_ctrl->groups[group].noncrit_mask[cpu]);
+
+		if (mask == 0)
+			continue;
+		
+		vec = GROUP_TO_IRQ(group) + (BITS_PER_LONG - ffs(mask));
+
+		if (bg_irq_vecs[vec].handler != NULL) {
+			(bg_irq_vecs[vec].handler)(bg_irq_vecs[vec].arg);
+			bgp_ack_irq(vec);
+		} else {
+			printf("masking bogus IRQ %d\n", vec);
+			bgp_set_irq(vec, 0);
+		}
+	}
+}
 
 #else
 
@@ -526,7 +612,9 @@ void irq_install_handler (int vec, interrupt_handler_t * handler, void *arg)
 	int i = vec;
 
 #if defined(CONFIG_440)
-#if defined(CONFIG_440GX) || defined(CONFIG_440SPE) || \
+#if defined(CONFIG_BGP)
+	irqa = bg_irq_vecs;
+#elif defined(CONFIG_440GX) || defined(CONFIG_440SPE) || \
     defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
 	if ((vec > 31) && (vec < 64)) {
 		i = vec - 32;
@@ -554,8 +642,10 @@ void irq_install_handler (int vec, interrupt_handler_t * handler, void *arg)
 	irqa[i].arg = arg;
 
 #if defined(CONFIG_440)
-#if defined(CONFIG_440GX) || defined(CONFIG_440SPE) || \
-    defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
+#if defined(CONFIG_BGP)
+	bgp_set_irq(vec, 1);
+#elif defined(CONFIG_440GX) || defined(CONFIG_440SPE) || \
+      defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
 	if ((vec > 31) && (vec < 64))
 		mtdcr (uic1er, mfdcr (uic1er) | (0x80000000 >> i));
 	else if (vec > 63)
@@ -578,7 +668,9 @@ void irq_free_handler (int vec)
 	int i = vec;
 
 #if defined(CONFIG_440)
-#if defined(CONFIG_440GX) || defined(CONFIG_440SPE) || \
+#if defined(CONFIG_BGP)
+	irqa = bg_irq_vecs;
+#elif defined(CONFIG_440GX) || defined(CONFIG_440SPE) || \
     defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
 	if ((vec > 31) && (vec < 64)) {
 		irqa = irq_vecs1;
@@ -600,8 +692,11 @@ void irq_free_handler (int vec)
 #endif
 
 #if defined(CONFIG_440)
+#if defined(CONFIG_BGP)
+	bgp_set_irq(vec, 0);
+#else
 #if defined(CONFIG_440GX) || defined(CONFIG_440SPE) || \
-    defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
+      defined(CONFIG_440EPX) || defined(CONFIG_440GRX)
 	if ((vec > 31) && (vec < 64))
 		mtdcr (uic1er, mfdcr (uic1er) & ~(0x80000000 >> i));
 	else if (vec > 63)
@@ -613,6 +708,7 @@ void irq_free_handler (int vec)
 	else
 #endif
 		mtdcr (uicer, mfdcr (uicer) & ~(0x80000000 >> i));
+#endif /* CONFIG_BGP */
 
 	irqa[i].handler = NULL;
 	irqa[i].arg = NULL;

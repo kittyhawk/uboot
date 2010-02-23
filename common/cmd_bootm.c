@@ -146,6 +146,9 @@ static boot_os_Fcn do_bootm_artos;
 static boot_os_Fcn do_bootm_lynxkdi;
 extern void lynxkdi_boot( image_header_t * );
 #endif
+#ifdef CONFIG_RELEASE_APP_PROCESSORS
+extern void release_app_processors( void(*)(void) );
+#endif
 
 #ifndef CFG_BOOTM_LEN
 #define CFG_BOOTM_LEN	0x800000	/* use 8MByte as default max gunzip size */
@@ -998,6 +1001,10 @@ do_bootm_linux (cmd_tbl_t *cmdtp, int flag,
 	}
 #endif
 
+#if defined(CONFIG_RELEASE_APP_PROCESSORS)
+	release_app_processors((void (*)(void))kernel);
+#endif
+
 	/*
 	 * Linux Kernel Parameters (passing board info data):
 	 *   r3: ptr to board info data
@@ -1025,6 +1032,7 @@ do_bootm_linux (cmd_tbl_t *cmdtp, int flag,
 	ft_setup(of_flat_tree, kbd, initrd_start, initrd_end);
 	/* ft_dump_blob(of_flat_tree); */
 #endif
+
 #if defined(CONFIG_OF_LIBFDT)
 	if (fdt_chosen(of_flat_tree, initrd_start, initrd_end, 0) < 0) {
 		printf("Failed creating the /chosen node (0x%08X), aborting.\n", of_flat_tree);
@@ -1043,7 +1051,6 @@ do_bootm_linux (cmd_tbl_t *cmdtp, int flag,
 	}
 #endif
 #endif /* if defined(CONFIG_OF_LIBFDT) */
-
 	(*kernel) ((bd_t *)of_flat_tree, (ulong)kernel, 0, 0, 0);
 #endif
 }

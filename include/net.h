@@ -84,6 +84,13 @@ typedef void	rxhand_f(uchar *, unsigned, unsigned, unsigned);
  */
 typedef void	thand_f(void);
 
+#ifdef CONFIG_LWIP_TCP
+/* 
+ *      An alternative ethernet packet handler.
+ */
+typedef void    ethhand_f(volatile uchar *, int);
+#endif  /* CONFIG_LWIP_TCP */
+
 #define NAMESIZE 16
 
 enum eth_state_t {
@@ -336,7 +343,7 @@ extern int		NetState;		/* Network loop state		*/
 extern int		NetRestartWrap;		/* Tried all network devices	*/
 #endif
 
-typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP } proto_t;
+typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP} proto_t;
 
 /* from net/net.c */
 extern char	BootFile[128];			/* Boot File name		*/
@@ -354,6 +361,13 @@ extern ushort CDPApplianceVLAN;
 #if (CONFIG_COMMANDS & CFG_CMD_SNTP)
 extern IPaddr_t	NetNtpServerIP;			/* the ip address to NTP 	*/
 extern int NetTimeOffset;			/* offset time from UTC		*/
+#endif
+
+
+#ifdef CONFIG_LWIP_TCP
+/* An alternative network stack */
+extern int      NetTCPLoop(void (*app_init[])(void));
+extern void     NetSetAlternateEthPktHandler(ethhand_f * f);
 #endif
 
 /* Initialize the network adapter */

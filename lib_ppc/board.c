@@ -338,7 +338,6 @@ init_fnc_t *init_sequence[] = {
 	testdram,
 #endif /* CFG_DRAM_TEST */
 	INIT_FUNC_WATCHDOG_RESET
-
 	NULL,			/* Terminate this list */
 };
 
@@ -587,6 +586,7 @@ void board_init_f (ulong bootflag)
 
 	memcpy (id, (void *)gd, sizeof (gd_t));
 
+        printf("board_init_f: about to call relocate(%p %p, %p)\n", addr_sp, id, addr);
 	relocate_code (addr_sp, id, addr);
 
 	/* NOTREACHED - relocate_code() does not return */
@@ -788,6 +788,9 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	/* relocate environment function pointers etc. */
 	env_relocate ();
 
+#if defined(CONFIG_BOARD_ENV_INIT_R)
+        (void) board_env_init_r();
+#endif
 	/*
 	 * Fill in missing fields of bd_info.
 	 * We do this here, where we have "normal" access to the

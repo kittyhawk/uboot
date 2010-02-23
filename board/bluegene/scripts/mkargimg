@@ -1,0 +1,133 @@
+#!/bin/bash
+#set -x 
+
+#####################################
+#
+#  IBM Coporation 
+#  Project kittyhawk
+#
+#  mkargimg
+#  Create qemu bootable debian disk 
+#  images.
+#  
+#####################################
+
+
+# global constants and defaults all can be overridden
+# by setting a env variable of the same name with MKQIMG_
+# prevfixed. 
+# FIXME:  May want to change more of these into command line arguments
+# and use these as default: eg. kernel and additionals :-)
+
+declare -r UBOOTIMGCMD=mkimage
+declare -r LDCMD=${CROSS_COMPILE}ld
+declare -r OBJCPYCMD=${CROSS_COMPILE}objcopy
+declare -r ARGLOADADDR=0x100000
+
+# globals argument variables set in processargs
+typeset comment
+typeset script
+typeset uimg
+typeset outfile
+typeset -i skipelf
+
+function usage 
+{
+  echo "usage: $0 [-c comment] [-u uimg] [-o outfile] [-S] script"
+  echo "  -c Comment to embed in the uimg default is created if not specified"
+  echo "  -u name of uimage file to create.  If not specified will be name of script"
+  echo "     file with .uimg appended"
+  echo "  -o name of outputfile if none specified it will be name of uimage file with .elf"
+  echo "     appended"
+  echo "  -S skip creating elf for argument script and only create uimg"
+}
+
+function processargs
+{
+  local    origargs="$@"
+  local -i optcount=0
+
+  skipelf=0;
+
+  while getopts "c:u:o:S" OPT
+  do 
+    case $OPT in
+      ("c") comment="$OPTARG"; (( optcount=optcount + 2));;
+      ("u") uimg="$OPTARG"; (( optcount=optcount + 2));;
+      ("o") output="$OPTARG"; (( optcount=optcount + 2));;
+      ("S") skipelf=1; (( optcount=optcount + 1));;
+    esac
+  done
+ 
+  shift $optcount
+
+  if [[ $# != 1 ]]
+  then
+    usage
+    exit -1
+  fi
+
+  script=$1
+
+  if [[ -z $comment ]]
+  then
+     comment="$(basename $script) : $(hostname)"
+  fi
+
+  if [[ -z $uimg ]]
+  then
+      uimg=${script}.uimg
+  fi
+
+  if [[ -z $output ]]
+  then 
+    output=${uimg}.elf
+  fi
+}
+
+processargs "$@"
+
+if ! type -a $UBOOTIMGCMD >/dev/null 2>&1
+then
+    echo "ERROR: $0 cannot find $UBOOTIMGCMD"
+    exit -1
+fi
+echo "$0: Creating $uimg"
+$UBOOTIMGCMD -T script -C none -n "$comment" -d $script $uimg
+   
+if [[ ! -a $uimg ]] 
+then
+   echo "ERROR: did not create $uimg"
+   exit -1
+fi
+
+if (( skipelf == 0 ))
+then
+  if ! type -a $LDCMD > /dev/null 2>&1
+  then
+     echo "ERROR: $0 cannot find $LDCMD"
+     exit -1
+  fi
+
+  if ! type -a $OBJCPYCMD > /dev/null 2>&1
+  then
+     echo "ERROR: $0 cannot find $OBJCPYCMD"
+     exit -1
+  fi
+
+  echo "$0: Creating $output"
+
+
+  $LDCMD -e0 -Tdata 0x0 -b binary -S -o ${output}.tmp.$$ $uimg
+# by default ld will create  .bss and .sbss sections and it will use
+# the .bss to pad the file to ensure and aligned size.  The control system
+# does not handle zero filling of non aligned sections.  Since we don't 
+# need to worry about it we simply remove the sections and additiionally
+# remove all symbols as we don't need those either.  And we relocate the
+# data section to be in the right place
+  $OBJCPYCMD --remove-section .bss --remove-section .sbss --change-section-address .data=$ARGLOADADDR --strip-all ${output}.tmp.$$ $output
+
+  rm ${output}.tmp.$$
+  chmod go+rx $output
+fi
+

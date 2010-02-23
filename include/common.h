@@ -227,7 +227,7 @@ char	*getenv	     (char *);
 int	getenv_r     (char *name, char *buf, unsigned len);
 int	saveenv	     (void);
 #ifdef CONFIG_PPC		/* ARM version to be fixed! */
-void inline setenv   (char *, char *);
+inline void setenv   (char *, char *);
 #else
 void	setenv	     (char *, char *);
 #endif /* CONFIG_PPC */
@@ -345,6 +345,7 @@ int board_early_init_f (void);
 int board_late_init (void);
 int board_postclk_init (void); /* after clocks/timebase, before env/serial */
 int board_early_init_r (void);
+int board_env_init_r (void);
 void board_poweroff (void);
 
 #if defined(CFG_DRAM_TEST)

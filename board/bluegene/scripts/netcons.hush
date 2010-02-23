@@ -1,0 +1,25 @@
+#
+# Kittyhawk
+#
+
+echo " --- $bgp_location: netcons.hush : BEGIN ---"
+
+# clear do variables to skip default behaviours
+setenv doboot
+setenv donoboot
+setenv dosleep
+
+setenv ncip 172.24.1.1:50${bgp_nodecard}${bgp_computecard}
+
+setenv myid $bgp_location:$ethaddr:$ipaddr:
+
+echo ++++++++++++++++++++ swinging console  ++++++++++++++++++++
+echo "$myid> about to start console redirect to $ncip"
+
+setenv stdout nc
+setenv stdin nc
+
+sleep 15
+
+echo "$myid> Kittyhawk : $ver"
+echo " --- $bgp_location: netcons.hush : END ---"

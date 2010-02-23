@@ -1,0 +1,10 @@
+echo " --- $bgp_location: nfsroot.hush : BEGIN ---"
+
+# override the behaviour when no ramdisk in found to boot via
+# default nfs root settings
+
+sleep 15
+setenv donoramdisk "setenv ramfsarg - && run donfsroot"
+sleep $bgp_computecard
+
+echo " --- $bgp_location: nfsroot.hush : END ---"

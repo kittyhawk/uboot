@@ -1,0 +1,9 @@
+echo " --- $bgp_location: dhcp.hush : BEGIN ---"
+
+# override the behaviour when no ramdisk in found to boot via
+# default nfs root settings
+
+setenv predhcpsleep 15   
+setenv doconfig "sleep $predhcpsleep; setenv autoload no; dhcp"
+
+echo " --- $bgp_location: dhcp.hush : END ---"

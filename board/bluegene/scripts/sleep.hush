@@ -1,0 +1,12 @@
+echo " --- $bgp_location: sleep.hush : BEGIN ---"
+
+# sleep on all nodes but ionode by clearing all dovariables but doionode
+
+setenv doconfig
+setenv dostartscript
+setenv doramdisk
+setenv donoramdisk
+setenv doboot
+setenv donoboot
+
+echo " --- $bgp_location: sleep.hush : END ---"

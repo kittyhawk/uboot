@@ -24,6 +24,22 @@
 
 #if defined(CONFIG_4xx) && defined(CFG_CMD_SETGETDCR)
 
+#if defined(CONFIG_BGP)
+#include <ppc450.h>	
+
+.globl	get_dcr
+.type	get_dcr,@function
+get_dcr:
+	mfdcrx 3,3
+	blr
+
+.globl	set_dcr
+.type	set_dcr,@function
+set_dcr:
+	mtdcrx 3,4
+	blr
+#else
+
 #include <ppc4xx.h>
 
 #define _LINUX_CONFIG_H 1       /* avoid reading Linux autoconf.h file  */
@@ -195,4 +211,5 @@ set_dcr:
 		blr				/* Return to calling function */
 .Lfe4:		.size	set_dcr,.Lfe4-set_dcr
 /* end set_dcr() */
+#endif /* CONFIG_BGP */
 #endif /* CONFIG_4xx & CFG_CMD_SETGETDCR */

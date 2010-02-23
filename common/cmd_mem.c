@@ -1251,5 +1251,6 @@ U_BOOT_CMD(
 );
 #endif /* CONFIG_MX_CYCLIC */
 
+
 #endif
 #endif	/* CFG_CMD_MEMORY */

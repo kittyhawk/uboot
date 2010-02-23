@@ -1,0 +1,65 @@
+#
+# Kittyhawk
+#
+
+echo $startscriptserver:$startscriptprefix.$bgp_location : netcons.hush : BEGIN
+
+# clear doboot variable to skip booting
+setenv doconfig
+setenv dostartscript
+setenv doboot
+setenv donoboot
+setenv dosleep
+setenv doramdisk
+setenv donoramdisk
+
+# clear config to skip dhcp config attempt
+setenv bootfile 172.24.1.1:/bgsys/kittyhawk/rw/home/vuhlig/boot/uImage-power
+setenv nfsroot 172.24.1.1:/bgsys/kittyhawk/ro/aoe-vblade
+
+# L4-specific setting (omit 0x in address--fdt can't handle it)
+setenv l4kaddr 1400000
+setenv l4s0addr 1500000
+setenv l4rootaddr 1600000
+
+# setup of environment variables; use late evaluation for DHCP
+setenv nfsargs 'setenv bootargs console=bgcons console=bgtty0,$bgtty_sendid,$bgp_rcvid,$bgtty_dest ip=$ipaddr:$serverip:$gatewayip:$netmask:::off init=/init nfsroot=$nfsroot,proto=tcp,nolock'
+setenv ramargs 'setenv bootargs console=bgcons ip=$ipaddr:$serverip:$gatewayip:$netmask:::off'
+
+# setup some convience stuff
+setenv appimgprefix 172.24.1.1:/bgsys/kittyhawk/rw/boot/images
+
+setenv silicoload 'nfs $ramfsaddr $appimgprefix/silico-ppc-2007-08-19.cpio.gz.uimg && imi $ramfsaddr && nfs $loadaddr $bootfile && imi $loadaddr'
+setenv silico 'run silicoload && run ramargs && bootm $loadaddr $ramfsaddr $fdtbootaddr'
+
+setenv rorload 'nfs $ramfsaddr $appimgprefix/ror-2007-04-30.cpio.gz.uimg && imi $ramfsaddr && nfs $loadaddr $bootfile && imi $loadaddr'
+setenv ror 'run rorload && run ramargs && bootm $loadaddr $ramfsaddr $fdtbootaddr'
+
+setenv winload 'nfs $ramfsaddr $appimgprefix/ppt2.uimg && imi $ramfsaddr && nfs $loadaddr $bootfile && imi $loadaddr'
+setenv win 'run winload && bootm $loadaddr $ramfsaddr  $fdtbootaddr'
+
+setenv sshload 'nfs $ramfsaddr $appimgprefix/sshd-ppc-2007-09-28.cpio.gz.uimg &&  imi $ramfsaddr && nfs $loadaddr $bootfile && imi $loadaddr'
+setenv ssh 'run sshload && run ramargs && bootm $loadaddr $ramfsaddr $fdtbootaddr'
+
+setenv powerlxload 'nfs $loadaddr 172.24.1.1:/bgsys/kittyhawk/rw/home/vuhlig/boot/uImage-power && imi $loadaddr'
+setenv powerlx 'dhcp && run powerlxload && run nfsargs && bootm $loadaddr - $fdtbootaddr'
+
+setenv l4kickload 'tftp $loadaddr /vuhlig/kickstart.uimage && imi $loadaddr'
+setenv l4kernelload 'tftp $l4kaddr /vuhlig/powerpc-kernel'
+setenv l4sigma0load 'tftp $l4s0addr /vuhlig/sigma0'
+setenv l4rootload 'tftp $l4rootaddr /vuhlig/pingpong'
+setenv l4load 'run l4kickload && run l4kernelload && run l4sigma0load && run l4rootload'
+setenv l4fdt 'fdt mknode / l4 && fdt set /l4 kernel <$l4kaddr>'
+setenv l4fdt2 'fdt set /l4 sigma0 <$l4s0addr> && fdt set /l4 roottask <$l4rootaddr>'
+setenv l4 'run l4load && run l4fdt && run l4fdt2 && bootm $loadaddr - $fdtbootaddr'
+
+setenv bgtty_dest $bgp_ionoderank
+#setenv bgtty_sendid $bgp_rank
+setenv bgtty_sendid 0
+setenv bgtty_rcvid $bgp_rank
+
+setenv myid $bgp_location:$bgp_rank
+echo "$myid> redirect console to $bgtty_dest:$bgtty_sendid"
+
+setenv stdout bgtty
+setenv stdin bgtty

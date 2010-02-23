@@ -39,7 +39,7 @@ static int output_recursion = 0;
 static int net_timeout;
 static uchar nc_ether[6];		/* server enet address */
 static IPaddr_t nc_ip;			/* server ip */
-static short nc_port;			/* source/target port */
+static ushort nc_port;			/* source/target port */
 static const char *output_packet;	/* used by first send udp */
 static int output_packet_len = 0;
 

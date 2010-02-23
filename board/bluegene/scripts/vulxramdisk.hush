@@ -1,0 +1,12 @@
+# my overrides
+
+setenv ramdisk_addr 0x02000000
+setenv loadaddr 0x01000000
+setenv doconfig
+setenv dostartscript
+setenv doboot
+
+
+echo loading image kernel @ $loadaddr ramdisk @ $ramdisk_addr
+setenv bootargs console=bgcons lpj=8500000 ip=::::::dhcp init=/init
+imi $loadaddr && bootm ${loadaddr} ${ramdisk_addr}

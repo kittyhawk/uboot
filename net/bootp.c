@@ -104,6 +104,7 @@ static int BootpCheckPkt(uchar *pkt, unsigned dest, unsigned src, unsigned len)
 	else if (bp->bp_hlen != HWL_ETHER)
 		retval = -5;
 	else if (NetReadLong((ulong*)&bp->bp_id) != BootpID) {
+		printf("rec bootid=%x, expect=%x\n", NetReadLong((ulong*)&bp->bp_id), BootpID);
 		retval = -6;
 	}
 
