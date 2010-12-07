@@ -162,6 +162,8 @@ _start_bg:
 	b	_start_440
 #endif
 
+#undef CONFIG_BGP
+
 /*
  * 440 Startup -- on reset only the top 4k of the effective
  * address space is mapped in by an entry in the instruction
@@ -207,7 +209,7 @@ _start_440:
 	mtspr	csrr0,r0
 	mtspr	csrr1,r0
 	/* NOTE: 440GX adds machine check status regs */
-#if defined(CONFIG_440) && !defined(CONFIG_440GP) && !defined(CONFIG_BGP)
+#if 0 //defined(CONFIG_440) && !defined(CONFIG_440GP) && !defined(CONFIG_BGP)
 	mtspr	mcsrr0,r0
 	mtspr	mcsrr1,r0
 	mfspr	r1,mcsr
@@ -304,7 +306,7 @@ skip_debug_init:
 	li	r1,0x2000
 	mtspr	ivor15,r1	/* Debug */
 
-#ifndef CONFIG_BGP	
+#ifndef CONFIG_BGP
 	/*----------------------------------------------------------------*/
 	/* Configure cache regions  */
 	/*----------------------------------------------------------------*/
@@ -534,7 +536,7 @@ _start:
 #if defined(CONFIG_440GX) || defined(CONFIG_440SP) || defined(CONFIG_440SPE)
 	mtdcr	l2_cache_cfg,r0		/* Ensure L2 Cache is off */
 #endif
-
+#if 0 //this block fails on khvmm
 	lis	r2,0x7fff
 	ori	r2,r2,0xffff
 	mfdcr	r1,isram0_dpc
@@ -543,6 +545,7 @@ _start:
 	mfdcr	r1,isram0_pmeg
 	and	r1,r1,r2		/* Disable pwr mgmt */
 	mtdcr	isram0_pmeg,r1
+#endif
 
 	lis	r1,0x8000		/* BAS = 8000_0000 */
 #if defined(CONFIG_440GX) || defined(CONFIG_440SP)
@@ -586,8 +589,13 @@ _start:
 	/*----------------------------------------------------------------*/
 	/* Setup the stack in internal SRAM */
 	/*----------------------------------------------------------------*/
+#if 0
 	lis	r1,CFG_INIT_RAM_ADDR@h
 	ori	r1,r1,CFG_INIT_SP_OFFSET@l
+#else
+	lis	r1,CFG_INIT_SP_OFFSET@h
+	addi r1,r1,CFG_INIT_SP_OFFSET@l
+#endif
 	li	r0,0
 	stwu	r0,-4(r1)
 	stwu	r0,-4(r1)		/* Terminate call chain */

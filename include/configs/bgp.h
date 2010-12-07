@@ -56,9 +56,10 @@
         "test -n $dostartscript && run dostartscript;" \
         "test -n $doramdisk && imi $ramfsaddr && run doramdisk;" \
         "test -n $donoramdisk && imi $ramfsaddr || run donoramdisk;" \
+        "run printfdt;" \
         "test -n $doionode && itest $bgp_isio == 1 && run doionode;" \
         "test -n $doboot && imi $loadaddr && unsilence && run doboot;" \
-        "unsilence && test -n $donoboot && run donoboot" 
+        "echo dropping to console && unsilence && test -n $donoboot && run donoboot"
 
 
 #undef	CONFIG_BOOTARGS
@@ -78,7 +79,7 @@
             "fdtbootaddr=0x1000000\0" \
         "startscriptaddr=0x1100000\0" \
    	       "loadaddr=0x10000000\0" \
-              "ramfsaddr=0x11000000\0" \
+              "ramfsaddr=0x12000000\0" \
              "initrdaddr=0x20000000\0" \
              "console=bgtty\0" \
         "dosetinitrd=setenv initrd_high $initrdaddr && echo dosetinitrd done\0" \
@@ -89,12 +90,13 @@
 	"bootfile=172.24.1.1:/bgsys/kittyhawk/rw/boot/images/default\0" \
         "donfsroot=setenv ramfsaddr - && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off ro root=/dev/nfs nfsroot=172.24.1.1:/bgsys/kittyhawk/ro/aoe-vblade,proto=tcp init=/init; echo donfsroot done\0" \
         "doramdisk=setenv doboot run boot; setenv ramfsarg $ramfsaddr && setenv bootargs console=$console,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off;echo doramdisk done\0" \
-        "donoramdisk=setenv ramfsarg - && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off;echo donoramdisk done\0" \
+        "donoramdisk=setenv doboot run boot; setenv ramfsarg - && setenv bootargs console=bgcons ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off;echo donoramdisk done\0" \
         "boot=bootm ${loadaddr} ${ramfsarg} ${fdtbootaddr}\0" \
         "doinit=run dofdtrelocate && run dosetinitrd && run dobgttysettings && echo doinit done\0" \
         "doionode=setenv doboot run boot; setenv bootargs console=bgcons ip=$bgp_ioeth_ip::$bgp_ioeth_nfsserver:$bgp_ioeth_netmask::eth0:off init=/init khbr=off; echo doionode done\0" \
         "dobgttycons=echo $bgp_rank: switching to bgttyconsole: $bgtty_sendid $bgtty_rcvid $bgtty_dest; setenv stdout bgtty; setenv stdin bgtty\0" \
-        "donoboot=sleep 30 && run dobgttycons\0" \
+        "donoboot=\0" \
+        "printfdt=echo some information about the fdt; echo initial addr: $fdtdefaultaddr, bootaddr: $fdtbootaddr; echo contents:; fdt print /; echo end of fdt\0" \
 	""
 
 
@@ -203,16 +205,23 @@
  */
 #define CFG_BOOT_BASE_ADDR	0x00000000
 #define CFG_SDRAM_BASE		0x00000000
-#define CFG_FLASH_BASE		0xFFF80000
+#define CFG_FLASH_BASE		0xAFFF8000
 #define CFG_MONITOR_LEN		(256 * 1024)	/* Reserve 256 kB for Monitor	*/
 #define CFG_MALLOC_LEN		(128 * 1024)	/* Reserve 128 kB for malloc()	*/
 #define CFG_MONITOR_BASE	TEXT_BASE
 #define CFG_PERIPHERAL_BASE	(0xC0000000)	/* fake */
 #define CFG_MAILBOX_BASE	0xFFFF8000
 
+#if 0
 #define CFG_TREE_CHN0		(0xD0000000)
 #define CFG_TREE_CHN1		(0xD0002000)
 #define CFG_IRQCTRL_BASE	(0xD0004000)
+#else
+#define CFG_TREE_CHN0		(0xD3000000)
+#define CFG_TREE_CHN1		(0xD3001000)
+#define CFG_IRQCTRL_BASE 	(0xD0049000)
+#endif
+#define CONFIG_VERY_BIG_RAM 1
 
 /*
  * Define here the location of the environment variables (FLASH or NVRAM).
@@ -249,7 +258,7 @@
 //#define CFG_INIT_DCACHE_CS	4	/* use cs # 4 for data cache memory    */
 
 #define CFG_INIT_RAM_ADDR	0x00000000  /* inside of SDRAM			   */
-#define CFG_INIT_RAM_END	0x2000	/* End of used area in RAM	       */
+#define CFG_INIT_RAM_END	0x08000000//0x2000	/* End of used area in RAM	       */
 #define CFG_GBL_DATA_SIZE      128  /* size in bytes reserved for initial data */
 #define CFG_GBL_DATA_OFFSET    (CFG_INIT_RAM_END - CFG_GBL_DATA_SIZE)
 #define CFG_INIT_SP_OFFSET	CFG_GBL_DATA_OFFSET

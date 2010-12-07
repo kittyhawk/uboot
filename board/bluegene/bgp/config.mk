@@ -23,7 +23,9 @@
 debug=0
 
 # CNS expects the CN kernel at 0x10; IO node has an extra trampoline
-TEXT_BASE = 0x10
+#TEXT_BASE = 0x10
+#TEXT_BASE = 0xFFFC0000
+TEXT_BASE = 0x0
 
 # An hard overload :(
 PLATFORM_CPPFLAGS = -DCONFIG_PPC -D__powerpc__ -DCONFIG_4xx -ffixed-r2 \

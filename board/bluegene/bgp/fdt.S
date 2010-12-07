@@ -55,7 +55,8 @@ _dt_struct_start:
 	.long	0x69626d2c
 	.long	0x626c7565
 	.long	0x67656e65
-	.short	0x2f70
+	.byte	0x2f
+	.byte	0x70
 	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
@@ -64,7 +65,8 @@ _dt_struct_start:
 	.long	0x69626d2c
 	.long	0x626c7565
 	.long	0x67656e65
-	.short	0x2f70
+	.byte	0x2f
+	.byte	0x70
 	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
@@ -136,7 +138,8 @@ _dt_struct_start:
 	.long	0x7
 	.long	0xb7
 	.long	0x6e617469
-	.short	0x7665
+	.byte	0x76
+	.byte	0x65
 	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
@@ -196,7 +199,8 @@ _dt_struct_start:
 	.long	0x7
 	.long	0xb7
 	.long	0x6e617469
-	.short	0x7665
+	.byte	0x76
+	.byte	0x65
 	.byte	0x0
 	.balign	4
 	.long	FDT_END_NODE
@@ -251,7 +255,8 @@ _dt_struct_start:
 	.long	0x7
 	.long	0xb7
 	.long	0x6e617469
-	.short	0x7665
+	.byte	0x76
+	.byte	0x65
 	.byte	0x0
 	.balign	4
 	.long	FDT_END_NODE
@@ -306,7 +311,8 @@ _dt_struct_start:
 	.long	0x7
 	.long	0xb7
 	.long	0x6e617469
-	.short	0x7665
+	.byte	0x76
+	.byte	0x65
 	.byte	0x0
 	.balign	4
 	.long	FDT_END_NODE
@@ -318,7 +324,8 @@ _dt_struct_start:
 	.long	0x7
 	.long	0x37
 	.long	0x6d656d6f
-	.short	0x7279
+	.byte	0x72
+	.byte	0x79
 	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
@@ -336,7 +343,8 @@ _dt_struct_start:
 	.long	0x6
 	.long	0x37
 	.long	0x65647261
-	.short	0x6d00
+	.byte	0x6d
+	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
 	.long	0xc
@@ -573,7 +581,8 @@ TORUS0:
 	.long	0x69626d2c
 	.long	0x6267702d
 	.long	0x746f7275
-	.short	0x7300
+	.byte	0x73
+	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
 	.long	0x8
@@ -717,7 +726,8 @@ MAL0:
 	.long	0x21
 	.long	0x69626d2c
 	.long	0x746f6d61
-	.short	0x6c00
+	.byte	0x6c
+	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
 	.long	0x8
@@ -796,7 +806,8 @@ MAL0_end:
 	.long	0x69626d2c
 	.long	0x6b697474
 	.long	0x79686177
-	.short	0x6b00
+	.byte	0x6b
+	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
 	.long	0x4
@@ -816,11 +827,16 @@ MAL0_end:
 	.long	FDT_PROP
 	.long	0x4
 	.long	0x198
+	.long	0x4
+	.balign	4
+	.long	FDT_PROP
+	.long	0x4
+	.long	0x1a5
 	.long	0x1
 	.balign	4
 	.long	FDT_PROP
 	.long	0x4
-	.long	0x1a3
+	.long	0x1b0
 	.long	0x1
 	.balign	4
 	.long	FDT_END_NODE
@@ -838,16 +854,17 @@ MAL0_end:
 	.long	0x69626d2c
 	.long	0x6b697474
 	.long	0x79686177
-	.short	0x6b00
+	.byte	0x6b
+	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
 	.long	0x4
-	.long	0x1b1
+	.long	0x1be
 	.long	0x256
 	.balign	4
 	.long	FDT_PROP
 	.long	0x4
-	.long	0x1a3
+	.long	0x1b0
 	.long	0x10
 	.balign	4
 	.long	FDT_PROP
@@ -867,7 +884,7 @@ MAL0_end:
 	.balign	4
 	.long	FDT_PROP
 	.long	0x4
-	.long	0x1b5
+	.long	0x198
 	.long	0x4
 	.balign	4
 	.long	FDT_END_NODE
@@ -905,7 +922,8 @@ XGMII0:
 	.long	0x21
 	.long	0x69626d2c
 	.long	0x78676d69
-	.short	0x6900
+	.byte	0x69
+	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
 	.long	0xc
@@ -943,7 +961,8 @@ EMAC0:
 	.long	0x21
 	.long	0x69626d2c
 	.long	0x78656d61
-	.short	0x6300
+	.byte	0x63
+	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
 	.long	0x4
@@ -1002,7 +1021,8 @@ EMAC0:
 	.long	0x6
 	.long	0x214
 	.long	0x78676d69
-	.short	0x6900
+	.byte	0x69
+	.byte	0x0
 	.balign	4
 	.long	FDT_PROP
 	.long	0x4
@@ -1077,10 +1097,10 @@ _dt_strings_start:
 	.string "tree-device"
 	.string "tree-route"
 	.string "tree-channel"
+	.string "torus-device"
 	.string "network-id"
 	.string "link-protocol"
 	.string "num"
-	.string "torus-device"
 	.string "mal-device"
 	.string "mal-tx-channel"
 	.string "mal-rx-channel"

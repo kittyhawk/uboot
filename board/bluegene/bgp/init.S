@@ -88,11 +88,17 @@
 /* VU: this is currently unused, the code runs on the microloader mappings */
 tlbtab:
     tlbtab_start
+#if 0
     tlbentry( CFG_SDRAM_BASE, SZ_1G, CFG_SDRAM_BASE, 0, AC_R|AC_W|AC_X|SA_W)
     tlbentry( CFG_SDRAM_BASE + 0x40000000, SZ_1G, CFG_SDRAM_BASE + 0x40000000, 0, AC_R|AC_W|AC_X|SA_W)
     tlbentry( CFG_SDRAM_BASE + 0x40000000, SZ_1G, CFG_SDRAM_BASE + 0x40000000, 0, AC_R|AC_W|AC_X|SA_W)
     tlbentry( CFG_MAILBOX_BASE, SZ_16K, CFG_MAILBOX_BASE, 0, AC_R|AC_W )
     tlbentry( CFG_MAILBOX_BASE + 0x10000, SZ_16K, CFG_MAILBOX_BASE + 0x10000, 0, AC_R|AC_W )
+#else
+	tlbentry( CFG_SDRAM_BASE, SZ_1G, CFG_SDRAM_BASE, 0, AC_R|AC_W|AC_X|SA_W)
+	tlbentry( CFG_MAILBOX_BASE, SZ_16K, CFG_FLASH_BASE, 0, AC_R|AC_W|AC_X)
+	tlbentry( CFG_MAILBOX_BASE + 0x4000, SZ_16K, CFG_FLASH_BASE + 0x4000, 0, AC_R|AC_W|AC_X)
+#endif
     tlbtab_end
 
 /* SMP bring-up */

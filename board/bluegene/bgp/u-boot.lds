@@ -23,11 +23,33 @@
 
 OUTPUT_ARCH(powerpc)
 SEARCH_DIR(/lib); SEARCH_DIR(/usr/lib); SEARCH_DIR(/usr/local/lib); SEARCH_DIR(/usr/local/powerpc-any-elf/lib);
+
+PHDRS
+{
+	cnstramp_io PT_LOAD ;
+	text PT_LOAD ;
+	bootpg PT_LOAD ;
+	resetvec PT_LOAD ;
+	data PT_LOAD ;
+}
+
+start = 0xFFFFFFFC ;
+
 SECTIONS
 {
+  .resetvec 0xFFFFFFFC :
+  {
+    *(.resetvec)
+  } :resetvec =0xffff
+
+  .bootpg 0xFFFFF000 :
+  {
+    cpu/ppc4xx/start.o	(.bootpg)
+  } :bootpg =0xffff
+
   /* Read-only sections, merged into text segment: */
   . = + SIZEOF_HEADERS;
-  .interp : { *(.interp) }
+  .interp : { *(.interp) } :NONE
   .hash          : { *(.hash)		}
   .dynsym        : { *(.dynsym)		}
   .dynstr        : { *(.dynstr)		}
@@ -56,7 +78,7 @@ SECTIONS
     *(.text)
     *(.fixup)
     *(.got1)
-  }
+  } :text
   _etext = .;
   PROVIDE (etext = .);
   .rodata    :
@@ -64,7 +86,7 @@ SECTIONS
     *(.rodata)
     *(.rodata1)
     *(.rodata.str1.4)
-  }
+  } :data
   .fini      : { *(.fini)    } =0
   .ctors     : { *(.ctors)   }
   .dtors     : { *(.dtors)   }
@@ -92,7 +114,7 @@ SECTIONS
     *(.sdata2)
     *(.dynamic)
     CONSTRUCTORS
-  }
+  } :data
   _edata  =  .;
   PROVIDE (edata = .);
 
@@ -135,5 +157,5 @@ SECTIONS
 
   .cnstramp_io 0x800000: {
     board/bluegene/bgp/init.o (.cnstramp_io)
-  }
+  } :cnstramp_io
 }
