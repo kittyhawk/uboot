@@ -70,8 +70,12 @@
 #define CONFIG_LWIP_TCP         1
 #undef  CONFIG_LWIP_TCP
 
-#define CONFIG_BGP_SYNCTBASES   1
-//#undef  CONFIG_BGP_SYNCTBASES
+//#define CONFIG_BGP_SYNCTBASES   1
+#undef  CONFIG_BGP_SYNCTBASES
+
+//#define CONFIG_BGP_KHVMM
+
+#ifndef CONFIG_BGP_KHVMM
 
 #define CONFIG_EXTRA_ENV_SETTINGS	\
           "argscriptaddr=0x100000\0" \
@@ -97,6 +101,33 @@
         "donoboot=sleep 30 && run dobgttycons\0" \
 	""
 
+#else
+#define CONFIG_EXTRA_ENV_SETTINGS	\
+          "argscriptaddr=0x100000\0" \
+            "fdtbootaddr=0x1000000\0" \
+        "startscriptaddr=0x1100000\0" \
+   	       "loadaddr=0x12000000\0" \
+              "ramfsaddr=0x13000000\0" \
+             "initrdaddr=0x20000000\0" \
+             "console=bgtty\0" \
+        "dosetinitrd=setenv initrd_high $initrdaddr && echo dosetinitrd done\0" \
+        "dobgttysettings=setenv bgtty_dest $bgp_ionoderank; setenv bgtty_sendid 0; setenv bgtty_rcvid 0\0" \
+        "dofdtrelocate=fdt move $fdtdefaultaddr $fdtbootaddr $fdttotalsize && fdt addr $fdtbootaddr && echo dofdtrelocate done\0" \
+        "bootfileload=nfs\0" \
+        "nfsroot=172.24.1.1:/bgsys/kittyhawk/ro/aoe-vblade\0" \
+        "bootfile=172.24.1.1:/bgsys/kittyhawk/rw/boot/images/default\0" \
+        "donfsroot=setenv ramfsaddr - && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off ro root=/dev/nfs nfsroot=172.24.1.1:/bgsys/kittyhawk/ro/aoe-vblade,proto=tcp init=/init; echo donfsroot done\0" \
+        "doramdisk=setenv doboot run boot; setenv ramfsarg $ramfsaddr && setenv bootargs console=bgcons ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off;echo doramdisk done\0" \
+          "donoramdisk=setenv doboot run boot; setenv ramfsarg - && setenv bootargs console=bgcons ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off;echo donoramdisk done\0" \
+        "boot=echo $bootargs && bootm ${loadaddr} ${ramfsarg} ${fdtbootaddr}\0" \
+        "doinit=run dofdtrelocate && run dosetinitrd && run dobgttysettings && echo doinit done\0" \
+        "doionode=setenv doboot run boot; setenv bootargs console=bgcons ip=$bgp_ioeth_ip::$bgp_ioeth_nfsserver:$bgp_ioeth_netmask::eth0:off init=/init khbr=off; echo doionode done\0" \
+          "dobgttycons=echo $bgp_rank: switching to bgttyconsole: $bgtty_sendid $bgtty_rcvid $bgtty_dest; setenv stdout bgtty; setenv stdin bgtty\0" \
+        "donoboot=sleep 30 && run dobgttycons\0" \
+        "donoboot=\0"  \
+	""
+
+#endif
 
 #define CONFIG_BOOTP_MASK        CONFIG_BOOTP_DEFAULT
 
@@ -201,6 +232,81 @@
  * (Set up by the startup code)
  * Please note that CFG_SDRAM_BASE _must_ start at 0
  */
+
+#define CFG_BGP_UA_BLIND        0x5             /* 64K Blind Device Normal Area */
+#define CFG_BGP_PA_BLIND        0x00000000
+#define CFG_BGP_VA_BLIND        0xFFF90000
+
+#define CFG_BGP_UA_BLIND_TRANS  0x5             /* 64K Blind Device Transient Area */
+#define CFG_BGP_PA_BLIND_TRANS  0x00010000
+#define CFG_BGP_VA_BLIND_TRANS  0xFFFA0000
+
+/* Netbus */
+#define CFG_BGP_UA_DMA          0x6             /* 16K DMA - All Groups */
+#define CFG_BGP_PA_DMA          0x00000000
+#define CFG_BGP_VA_DMA          0xFFFD0000
+
+#define CFG_BGP_UA_TREE0        0x6             /* 1K Tree VC0 FIFOs and Status */
+#define CFG_BGP_PA_TREE0        0x10000000
+#define CFG_BGP_VA_TREE0        0xFFFDC000
+
+#define CFG_BGP_UA_TREE1        0x6             /* 1K Tree VC1 FIFOs and Status */
+#define CFG_BGP_PA_TREE1        0x11000000
+#define CFG_BGP_VA_TREE1        0xFFFDD000
+
+#define CFG_BGP_UA_TORUS0       0x6             /* 32K Torus Group 0 FIFOs and Status */
+#define CFG_BGP_PA_TORUS0       0x01140000
+#define CFG_BGP_VA_TORUS0       0xFFFB0000
+
+#define CFG_BGP_UA_TORUS1       0x6             /* 32K Torus Group 1 FIFOs and Status */
+#define CFG_BGP_PA_TORUS1       0x01150000
+#define CFG_BGP_VA_TORUS1       0xFFFC0000
+
+/* Devbus */
+#define CFG_BGP_UA_UPC          0x7             /* 4K Universal Performance Counters Data */
+#define CFG_BGP_PA_UPC          0x10000000
+#define CFG_BGP_VA_UPC          0xFFFDA000
+
+#define CFG_BGP_UA_TOMAL        0x7             /* 16K TCP/IP Offload Memory Access */
+#define CFG_BGP_PA_TOMAL        0x20000000
+#define CFG_BGP_VA_TOMAL        0xFFFD4000
+
+#define CFG_BGP_UA_XEMAC        0x7             /* 4K Ethernet Media Access Controller */
+#define CFG_BGP_PA_XEMAC        0x20004000
+#define CFG_BGP_VA_XEMAC        0xFFFD8000
+  
+#define CFG_BGP_UA_DEVBUS       0x7             /* 4K Ethernet devbus registers */
+#define CFG_BGP_PA_DEVBUS       0x20005000
+#define CFG_BGP_VA_DEVBUS       0xFFFD9000
+
+#define CFG_BGP_UA_BIC          0x7             /* 4K Interrupt Controller */
+#define CFG_BGP_PA_BIC          0x30000000
+#define CFG_BGP_VA_BIC          0xFFFDE000
+
+#define CFG_BGP_UA_SRAMERR      0x7             /* 1K SRAM Error Status/Counters */
+#define CFG_BGP_PA_SRAMERR      0xFFFDFC00
+#define CFG_BGP_VA_SRAMERR      0xFFFDFC00
+
+#define CFG_BGP_UA_SRAMECC      0x7             /* 64K Back-door Access to SRAM ECC */
+#define CFG_BGP_PA_SRAMECC      0xFFFE0000
+#define CFG_BGP_VA_SRAMECC      0xFFFE0000
+
+#define CFG_BGP_UA_LOCKBOX_SUP  0x7             /* 16K LockBox Supervisor */
+#define CFG_BGP_PA_LOCKBOX_SUP  0xFFFF0000
+#define CFG_BGP_VA_LOCKBOX_SUP  0xFFFF0000
+
+#define CFG_BGP_UA_LOCKBOX_USR  0x7             /* 16K LockBox User */
+#define CFG_BGP_PA_LOCKBOX_USR  0xFFFF4000
+#define CFG_BGP_VA_LOCKBOX_USR  0xFFFF4000
+
+#define CFG_BGP_UA_SRAM         0x7             /* 32K SRAM */
+#define CFG_BGP_PA_SRAM0        0xFFFF8000
+#define CFG_BGP_VA_SRAM0        0xFFFF8000
+#define CFG_BGP_PA_SRAM1        0xFFFFC000
+#define CFG_BGP_VA_SRAM1        0xFFFFC000
+
+/*****/
+
 #define CFG_BOOT_BASE_ADDR	0x00000000
 #define CFG_SDRAM_BASE		0x00000000
 #define CFG_FLASH_BASE		0xFFF80000
@@ -210,9 +316,17 @@
 #define CFG_PERIPHERAL_BASE	(0xC0000000)	/* fake */
 #define CFG_MAILBOX_BASE	0xFFFF8000
 
-#define CFG_TREE_CHN0		(0xD0000000)
-#define CFG_TREE_CHN1		(0xD0002000)
-#define CFG_IRQCTRL_BASE	(0xD0004000)
+#if 0
+#define CFG_TREE_CHN0          (0xD0000000)
+#define CFG_TREE_CHN1          (0xD0002000)
+#define CFG_IRQCTRL_BASE       (0xD0004000)
+#else
+#define CFG_TREE_CHN0          (0xD3000000)
+#define CFG_TREE_CHN1          (0xD3001000)
+#define CFG_IRQCTRL_BASE       (0xD0049000)
+#endif
+#define CONFIG_VERY_BIG_RAM 1
+
 
 /*
  * Define here the location of the environment variables (FLASH or NVRAM).

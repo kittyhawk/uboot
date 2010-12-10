@@ -1,0 +1,25 @@
+unsilence
+echo "--- Begin VM settings ---"
+#mketh 2 1 9000
+mketh 2 1 8192 vnic
+mketh 1 0 9000
+
+uni2ip eth0ip $uni 172.16.130.0 172.31.255.255
+echo eth0ip is $eth0ip
+uni2ip eth1ip $uni 10.0.0.0 10.255.255.255
+
+echo eth0ip is $eth0ip
+echo eth1ip is $eth1ip
+
+setenv ipaddr $eth0ip
+setenv gatewayip 172.16.2.1
+setenv netmask 255.255.0.0
+setenv ip2addr $eth1ip
+
+#Bringup eth1
+setenv eth1 "$eth1ip 255.0.0.0"
+setenv khctleth0ipaddr 1
+
+#setenv doramdisk 'setenv doboot run boot; setenv ramfsarg $ramfsaddr && setenv bootargs nosmp console=bgcons ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off'
+#fdt print /
+echo "--- End VM settings ---"

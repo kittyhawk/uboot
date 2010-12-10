@@ -66,7 +66,11 @@ static cns_descriptor_t *cns_descriptor;
 
 static int running_on_cns(void)
 {
+#ifndef CONFIG_BGP_KHVMM
+    return 0;
+#else
     return 1;
+#endif
 }
 
 static int valid_cns_descriptor(cns_descriptor_t *desc)
@@ -685,8 +689,9 @@ int board_early_init_f(void)
 
     /* Configure serdes, which constitutes link training.  */
     r = setup_serdes();
+#ifndef CONFIG_BGP_KHVMM
     if (r) panic("panic: serdes initialization failed");
-
+#endif
     return 0;
 }
 
@@ -731,12 +736,14 @@ long int initdram(int board)
     long megabytes, bytes;
 
     megabytes = personality->ddr.sizemb;
+#ifndef CONFIG_BGP_KHVMM
     /*
      * We limit u-boot to 2Gig, because it needs virtual address space for
      * device memory.  The true memory size is pasted into the device tree
      * in bg_fdt_setup().
      */
     if (megabytes > 2048) megabytes = 2048;
+#endif
     bytes = megabytes * 1024 * 1024;
 
     return bytes;
@@ -779,9 +786,9 @@ int misc_init_f (void)
 {
     // add device mappings...
     
-    add_tlb_entry(CFG_IRQCTRL_BASE, BGP_IRQCTRL_PHYS, SZ_4K, SA_I|SA_G);
-    add_tlb_entry(CFG_TREE_CHN0, BGP_TREE_CHN0_PHYS, SZ_4K, SA_I|SA_G);
-    add_tlb_entry(CFG_TREE_CHN1, BGP_TREE_CHN1_PHYS, SZ_4K, SA_I|SA_G);
+    add_tlb_entry(CFG_IRQCTRL_BASE, BGP_IRQCTRL_PHYS, SZ_4K, SA_I|SA_G|AC_R|AC_W|AC_X);
+    add_tlb_entry(CFG_TREE_CHN0, BGP_TREE_CHN0_PHYS, SZ_4K, SA_I|SA_G|AC_R|AC_W|AC_X);
+    add_tlb_entry(CFG_TREE_CHN1, BGP_TREE_CHN1_PHYS, SZ_4K, SA_I|SA_G|AC_R|AC_W|AC_X);
 
     return 0;
 }
@@ -911,6 +918,9 @@ static void delete_device_node(void *fdt, char *name)
 	printf("Error deleting device node %s (%s)\n", 
 	       name, fdt_strerror(err));
 }
+
+
+#ifndef CONFIG_BGP_KHVMM
 
 static int
 add(void *fdt, int node, char *name, void *ptr, int size)
@@ -1047,20 +1057,24 @@ add_personality(void *fdt)
 
 #undef ADD
 }
-	
+#endif
+
 void
 bg_fdt_setup (void *fdt, bd_t *bd)
 {
     BGP_UCI_ComputeCard_t *ccuci = (BGP_UCI_ComputeCard_t*)&personality->kernel.uci;
     int nodeoffset, err;
-    unsigned long long start, size;
     u32 tmp[3];
     unsigned char mac_address[6];
 
+#ifndef CONFIG_BGP_KHVMM
     add_personality(fdt);
-
+#endif
+    
     nodeoffset = fdt_path_offset (fdt, "/memory");
     if (nodeoffset >= 0) {
+#ifndef CONFIG_BGP_KHVMM
+        unsigned long long start, size;
 	start = CFG_SDRAM_BASE;
 	size = ((unsigned long long) personality->ddr.sizemb) * 1024 * 1024;
 	if (size > 0xfffff000) size = 0xfffff000;  /* largest we can specify */
@@ -1068,7 +1082,11 @@ bg_fdt_setup (void *fdt, bd_t *bd)
 	tmp[0] = cpu_to_be32((unsigned int) (start >> 32));
 	tmp[1] = cpu_to_be32((unsigned int) (start & 0xffffffff));
 	tmp[2] = cpu_to_be32((unsigned int) (size & 0xffffffff));
-
+#else
+        tmp[0] = cpu_to_be32(bd->bi_memstart);
+	tmp[1] = 0;
+	tmp[2] = cpu_to_be32(bd->bi_memsize);
+#endif
 	fdt_setprop(fdt, nodeoffset, "reg", tmp, sizeof(tmp));
     }
 

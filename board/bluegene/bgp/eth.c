@@ -1,6 +1,6 @@
 /*********************************************************************
  *                
- * Copyright (C) 2007-2008, Volkmar Uhlig, IBM Corporation
+ * Copyright (C) 2007-2008, 2010, Volkmar Uhlig, IBM Corporation
  *                
  * Description:   Ethernet driver for BG networks
  *                
@@ -128,7 +128,7 @@ typedef struct {
     struct bglink_hdr lnk;
     unsigned char data[MAX_FRAGMENTS * TREE_FRAGPAYLOAD];
     unsigned long version; // version counter to maintain ordering
-} tree_packet_t;
+} __attribute__((packed)) tree_packet_t;
 
 static tree_packet_t packet_buffer[PACKET_BUF_SIZE] __attribute__((aligned(16)));
 static int (*early_packet_handler)(tree_packet_t *packet);
