@@ -251,7 +251,8 @@ __LIBS := $(subst $(obj),,$(LIBS))
 #########################################################################
 #########################################################################
 
-ALL = $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND)
+#ALL = $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND)
+ALL = $(obj)System.map $(U_BOOT_NAND)
 
 all:		$(ALL)
 
@@ -1043,6 +1044,10 @@ bamboo_config:	unconfig
 
 bgp_config: unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx bgp bluegene
+
+bgp_khvmm_config: unconfig
+	@$(MKCONFIG) $(@:_config=) ppc ppc4xx bgp bluegene
+	@echo "KHVMM = y" >> $(obj)include/config.mk
 
 bubinga_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx bubinga amcc

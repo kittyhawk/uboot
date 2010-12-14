@@ -156,7 +156,6 @@ SECTIONS
    . = ASSERT (_end < 0x100000, "u-boot is too large to fit into 1MB");
    */
    PROVIDE (end = .);
-
    .cnstramp_io 0x800000: {
     board/bluegene/bgp/init.o (.cnstramp_io)
   }

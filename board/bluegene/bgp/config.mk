@@ -21,9 +21,14 @@
 # MA 02111-1307 USA
 #
 debug=0
+include $(OBJTREE)/include/config.mk
 
 # CNS expects the CN kernel at 0x10; IO node has an extra trampoline
+ifeq ($(KHVMM), y)
+TEXT_BASE = 0
+else
 TEXT_BASE = 0x10
+endif
 
 # An hard overload :(
 PLATFORM_CPPFLAGS = -DCONFIG_PPC -D__powerpc__ -DCONFIG_4xx -ffixed-r2 \

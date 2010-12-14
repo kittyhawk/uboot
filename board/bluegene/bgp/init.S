@@ -87,7 +87,7 @@
 
 tlbtab:
     tlbtab_start
-#ifdef CONFIG_BGP_KHVMM        
+#ifndef CONFIG_BGP_KHVMM
 #if 0
      /* VU: this is currently unused, the code runs on the microloader mappings */
      tlbentry( CFG_SDRAM_BASE, SZ_1G, CFG_SDRAM_BASE, 0, AC_R|AC_W|AC_X|SA_W)

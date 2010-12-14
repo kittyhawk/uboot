@@ -122,7 +122,11 @@ struct bg_tree_eth {
  * actually zeroed.
 #define PACKET_BUF_SIZE		128
  */
+#ifndef CONFIG_BGP_KHVMM
 #define PACKET_BUF_SIZE		2048
+#else
+#define PACKET_BUF_SIZE		64
+#endif 
 
 typedef struct {
     struct bglink_hdr lnk;
