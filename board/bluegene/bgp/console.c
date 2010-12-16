@@ -1,6 +1,6 @@
 /*********************************************************************
  *                
- * Copyright (C) 2007, Volkmar Uhlig, IBM Corporation
+ * Copyright (C) 2007, 2010, Volkmar Uhlig, IBM Corporation
  *                
  * Description:   Mailbox driver
  *                
@@ -195,7 +195,11 @@ void serial_setbrg(void)
 #define MB_BUF_SIZE	128
 static char mailbox_buffer[MB_BUF_SIZE];
 static int buflen = 0;
+#ifndef CONFIG_BGP_KHVMM
 static int mailbox_silent = 1;
+#else
+static int mailbox_silent = 0;
+#endif
 
 int is_mailbox_silent(void) 
 {

@@ -306,7 +306,7 @@ skip_debug_init:
 	li	r1,0x2000
 	mtspr	ivor15,r1	/* Debug */
 
-#ifndef CONFIG_BGP
+#if  !defined(CONFIG_BGP) || defined(CONFIG_BGP_KHVMM)        
 	/*----------------------------------------------------------------*/
 	/* Configure cache regions  */
 	/*----------------------------------------------------------------*/

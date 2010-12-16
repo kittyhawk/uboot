@@ -22,6 +22,7 @@
  */
 
 OUTPUT_ARCH(powerpc)
+/*
 SEARCH_DIR(/lib); SEARCH_DIR(/usr/lib); SEARCH_DIR(/usr/local/lib); SEARCH_DIR(/usr/local/powerpc-any-elf/lib);
 
 PHDRS
@@ -35,6 +36,15 @@ PHDRS
 
 start = 0xFFFFFFFC ;
 
+*/
+
+PHDRS
+{
+  sram2 PT_LOAD;
+  sram1 PT_LOAD;
+  dram  PT_LOAD;
+}
+
 SECTIONS
 {
   .resetvec 0xFFFFFFFC :
@@ -47,66 +57,80 @@ SECTIONS
     cpu/ppc4xx/start.o	(.bootpg)
   } :bootpg =0xffff
 
+  .resetvec 0xfffffffc :
+  {
+    *(.resetvec)
+  } : sram2 = 0xffff
+
+  .bootpg 0xfffff000 :
+  {
+    cpu/ppc4xx/start.o  (.bootpg)
+  } : sram1 = 0xffff
+
   /* Read-only sections, merged into text segment: */
   . = + SIZEOF_HEADERS;
-  .interp : { *(.interp) } :NONE
-  .hash          : { *(.hash)		}
-  .dynsym        : { *(.dynsym)		}
-  .dynstr        : { *(.dynstr)		}
-  .rel.text      : { *(.rel.text)		}
-  .rela.text     : { *(.rela.text) 	}
-  .rel.data      : { *(.rel.data)		}
-  .rela.data     : { *(.rela.data) 	}
-  .rel.rodata    : { *(.rel.rodata) 	}
-  .rela.rodata   : { *(.rela.rodata) 	}
-  .rel.got       : { *(.rel.got)		}
-  .rela.got      : { *(.rela.got)		}
-  .rel.ctors     : { *(.rel.ctors)	}
-  .rela.ctors    : { *(.rela.ctors)	}
-  .rel.dtors     : { *(.rel.dtors)	}
-  .rela.dtors    : { *(.rela.dtors)	}
-  .rel.bss       : { *(.rel.bss)		}
-  .rela.bss      : { *(.rela.bss)		}
-  .rel.plt       : { *(.rel.plt)		}
-  .rela.plt      : { *(.rela.plt)		}
-  .init          : { *(.init)	}
-  .plt : { *(.plt) }
-  .text      :
+  .interp	: { *(.interp) 		} : dram
+  .hash		: { *(.hash)		} : dram
+  .dynsym	: { *(.dynsym)		} : dram
+  .dynstr	: { *(.dynstr)		} : dram
+  .rel.text	: { *(.rel.text)	} : dram
+  .rela.text	: { *(.rela.text) 	} : dram
+  .rel.data	: { *(.rel.data)	} : dram
+  .rela.data	: { *(.rela.data) 	} : dram
+  .rel.rodata	: { *(.rel.rodata) 	} : dram
+  .rela.rodata	: { *(.rela.rodata) 	} : dram
+  .rel.got	: { *(.rel.got)		} : dram
+  .rela.got	: { *(.rela.got)	} : dram
+  .rel.ctors	: { *(.rel.ctors)	} : dram
+  .rela.ctors	: { *(.rela.ctors)	} : dram
+  .rel.dtors	: { *(.rel.dtors)	} : dram
+  .rela.dtors	: { *(.rela.dtors)	} : dram
+  .rel.bss	: { *(.rel.bss)		} : dram
+  .rela.bss	: { *(.rela.bss)	} : dram
+  .rel.plt	: { *(.rel.plt)		} : dram
+  .rela.plt	: { *(.rela.plt)	} : dram
+  .init		: { *(.init)		} : dram
+  .plt		: { *(.plt)		} : dram
+
+  .text :
   {
     cpu/ppc4xx/start.o (.text)
-    cpu/ppc4xx/start.o (.bootpg)
     *(.text)
     *(.fixup)
     *(.got1)
-  } :text
+  } : dram
+
   _etext = .;
   PROVIDE (etext = .);
-  .rodata    :
+
+  .rodata :
   {
     *(.rodata)
     *(.rodata1)
     *(.rodata.str1.4)
-  } :data
-  .fini      : { *(.fini)    } =0
-  .ctors     : { *(.ctors)   }
-  .dtors     : { *(.dtors)   }
+  } : dram
+
+  .fini      : { *(.fini)    } : dram = 0
+  .ctors     : { *(.ctors)   } : dram
+  .dtors     : { *(.dtors)   } : dram
 
   /* Read-write section, merged into data segment: */
   . = (. + 0x00FF) & 0xFFFFFF00;
   _erotext = .;
   PROVIDE (erotext = .);
-  .reloc   :
+
+  .reloc :
   {
     *(.got)
     _GOT2_TABLE_ = .;
     *(.got2)
     _FIXUP_TABLE_ = .;
     *(.fixup)
-  }
+  } : dram 
   __got2_entries = (_FIXUP_TABLE_ - _GOT2_TABLE_) >>2;
   __fixup_entries = (. - _FIXUP_TABLE_)>>2;
 
-  .data    :
+  .data :
   {
     *(.data)
     *(.data1)
@@ -114,25 +138,25 @@ SECTIONS
     *(.sdata2)
     *(.dynamic)
     CONSTRUCTORS
-  } :data
+  } : dram
+
   _edata  =  .;
   PROVIDE (edata = .);
 
   . = .;
   __u_boot_cmd_start = .;
-  .u_boot_cmd : { *(.u_boot_cmd) }
+  .u_boot_cmd : { *(.u_boot_cmd) } : dram
   __u_boot_cmd_end = .;
-
 
   . = .;
   __start___ex_table = .;
-  __ex_table : { *(__ex_table) }
+  __ex_table : { *(__ex_table) } : dram
   __stop___ex_table = .;
 
   . = ALIGN(256);
   __init_begin = .;
-  .text.init : { *(.text.init) }
-  .data.init : { *(.data.init) }
+  .text.init : { *(.text.init) } : dram
+  .data.init : { *(.data.init) } : dram
   . = ALIGN(256);
   __init_end = .;
 
@@ -144,18 +168,17 @@ SECTIONS
    *(.bss)
    *(COMMON)
    . = ALIGN(4); /* make BG's control system happy and size-align BSS */
-  }
+  } : dram
 
   _end = . ;
-/*
- * This assertion is valid and should be restored.  For now, however, it
- * seems we need a large tree-packet buffer, and we seem to get away with
- * it because BSS is not zeroed as it should be.
-  . = ASSERT (_end < 0x100000, "u-boot is too large to fit into 1MB");
- */
-  PROVIDE (end = .);
-
-  .cnstramp_io 0x800000: {
+  /*
+   * This assertion is valid and should be restored.  For now, however, it
+   * seems we need a large tree-packet buffer, and we seem to get away with
+   * it because BSS is not zeroed as it should be.
+   . = ASSERT (_end < 0x100000, "u-boot is too large to fit into 1MB");
+   */
+   PROVIDE (end = .);
+   .cnstramp_io 0x800000: {
     board/bluegene/bgp/init.o (.cnstramp_io)
   } :cnstramp_io
 }
