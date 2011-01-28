@@ -74,7 +74,6 @@
 #undef  CONFIG_BGP_SYNCTBASES
 
 #ifndef CONFIG_BGP_KHVMM
-
 #define CONFIG_EXTRA_ENV_SETTINGS	\
           "argscriptaddr=0x100000\0" \
             "fdtbootaddr=0x1000000\0" \
@@ -101,11 +100,11 @@
 
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS	\
-          "argscriptaddr=0x100000\0" \
+          "argscriptaddr=0x10000000\0" \
             "fdtbootaddr=0x1000000\0" \
-        "startscriptaddr=0x1100000\0" \
-   	       "loadaddr=0x12000000\0" \
-              "ramfsaddr=0x13000000\0" \
+        "startscriptaddr=0x10000000\0" \
+   	       "loadaddr=0x11000000\0" \
+              "ramfsaddr=0x12000000\0" \
              "initrdaddr=0x20000000\0" \
              "console=bgtty\0" \
         "dosetinitrd=setenv initrd_high $initrdaddr && echo dosetinitrd done\0" \
@@ -116,14 +115,14 @@
         "bootfile=172.24.1.1:/bgsys/kittyhawk/rw/boot/images/default\0" \
         "donfsroot=setenv ramfsaddr - && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off ro root=/dev/nfs nfsroot=172.24.1.1:/bgsys/kittyhawk/ro/aoe-vblade,proto=tcp init=/init; echo donfsroot done\0" \
         "doramdisk=setenv doboot run boot; setenv ramfsarg $ramfsaddr && setenv bootargs console=bgcons ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off;echo doramdisk done\0" \
-          "donoramdisk=setenv doboot run boot; setenv ramfsarg - && setenv bootargs console=bgcons ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off;echo donoramdisk done\0" \
-        "boot=echo $bootargs && bootm ${loadaddr} ${ramfsarg} ${fdtbootaddr}\0" \
+        "donoramdisk=setenv doboot run boot; setenv ramfsarg - && setenv bootargs console=bgcons ip=$ipaddr:$serverip:$gatewayip:$netmask::eth0:off;echo donoramdisk done\0" \
+        "boot=echo $bootargs && bootm ${loadaddr} ${ramfsarg} ${fdtbootaddr} ; echo boot done\0" \
         "doinit=run dofdtrelocate && run dosetinitrd && run dobgttysettings && echo doinit done\0" \
         "doionode=setenv doboot run boot; setenv bootargs console=bgcons ip=$bgp_ioeth_ip::$bgp_ioeth_nfsserver:$bgp_ioeth_netmask::eth0:off init=/init khbr=off; echo doionode done\0" \
-          "dobgttycons=echo $bgp_rank: switching to bgttyconsole: $bgtty_sendid $bgtty_rcvid $bgtty_dest; setenv stdout bgtty; setenv stdin bgtty\0" \
+        "dobgttycons=echo $bgp_rank: switching to bgttyconsole: $bgtty_sendid $bgtty_rcvid $bgtty_dest; setenv stdout bgtty; setenv stdin bgtty\0" \
         "donoboot=sleep 30 && run dobgttycons\0" \
-        "donoboot=\0"  \
 	""
+
 
 #endif
 
