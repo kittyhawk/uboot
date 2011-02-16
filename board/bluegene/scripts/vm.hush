@@ -1,8 +1,8 @@
 unsilence
 echo "--- Begin VM settings ---"
 #mketh 2 1 8192 vnic
-mketh 1 0 9000
 mketh 2 1 9000
+mketh 1 0 9000
 
 #Watson eth0
 #uni2ip eth0ip $uni 172.16.130.0 172.31.255.255
