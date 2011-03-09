@@ -632,7 +632,7 @@ int board_early_init_f(void)
     setup_mailboxes();
 
     /* Configure global interrupt/barrier network */
-    //global_int_init(); //khvmm is doing this
+    global_int_init();
 
     /* Bail out here if CNS is running. */
     if (running_on_cns()) {
@@ -1579,12 +1579,9 @@ inline u32
 GlobInt_InitBarrier(u32 channel)
 {
   /* Wait for idle state. */
-//FIXME
-#if 0
   while(! GlobInt_IsRaised(channel))
     {
     }
-#endif
   /* Fire global interrupt to show we are entering the barrier. */
   GlobInt_Disarm(channel);
   GlobInt_SetARMType(channel, BGP_DCR_GLOBAL_INT_SET_ARM_AND);
@@ -1605,14 +1602,12 @@ inline u32
 GlobInt_Barrier(u32 channel)
 {
   GlobInt_InitBarrier(channel);
-//FIXME
-#if 0
+
   for (;;)
     {
       if(GlobInt_QueryDone(channel))
 	break;
     }
-#endif
   return 0;
 }
 
@@ -1745,7 +1740,7 @@ int last_stage_init(void)
         mailbox_unsilence();
         printf("syncTimeBases: beforeu=%x:%x, middle=%x:%x after=%x:%x\n", beforeu, beforel, 
                middleu, middlel, afteru, afterl);
-        //mailbox_silence();
+        mailbox_silence();
     }
 #endif
 

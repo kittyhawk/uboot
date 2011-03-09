@@ -1028,7 +1028,6 @@ do_bootm_linux (cmd_tbl_t *cmdtp, int flag,
 	 *   r6: NULL
 	 *   r7: NULL
 	 */
-	debug("About to boot, passing an FDT...\n");
 #if defined(CONFIG_OF_FLAT_TREE)
 	ft_setup(of_flat_tree, kbd, initrd_start, initrd_end);
 	/* ft_dump_blob(of_flat_tree); */

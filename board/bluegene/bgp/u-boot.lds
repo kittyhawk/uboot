@@ -24,18 +24,6 @@
 OUTPUT_ARCH(powerpc)
 /*
 SEARCH_DIR(/lib); SEARCH_DIR(/usr/lib); SEARCH_DIR(/usr/local/lib); SEARCH_DIR(/usr/local/powerpc-any-elf/lib);
-
-PHDRS
-{
-	cnstramp_io PT_LOAD ;
-	text PT_LOAD ;
-	bootpg PT_LOAD ;
-	resetvec PT_LOAD ;
-	data PT_LOAD ;
-}
-
-start = 0xFFFFFFFC ;
-
 */
 
 PHDRS
@@ -47,16 +35,6 @@ PHDRS
 
 SECTIONS
 {
-  .resetvec 0xFFFFFFFC :
-  {
-    *(.resetvec)
-  } :resetvec =0xffff
-
-  .bootpg 0xFFFFF000 :
-  {
-    cpu/ppc4xx/start.o	(.bootpg)
-  } :bootpg =0xffff
-
   .resetvec 0xfffffffc :
   {
     *(.resetvec)
@@ -180,5 +158,5 @@ SECTIONS
    PROVIDE (end = .);
    .cnstramp_io 0x800000: {
     board/bluegene/bgp/init.o (.cnstramp_io)
-  } :cnstramp_io
+  }
 }

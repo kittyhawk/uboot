@@ -185,7 +185,6 @@ ramdisk: /memreserve/ 0 0;		/* place holder for ramdisk */
 			tree-device = <&TREE0>;
 			tree-route = <0>;
 			tree-channel = <0>;
-			torus-device = <&TORUS0>;
 			network-id = <1>;
 			link-protocol = <1>;
 		};

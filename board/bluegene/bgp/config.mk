@@ -27,9 +27,7 @@ include $(OBJTREE)/include/config.mk
 ifeq ($(KHVMM), y)
 TEXT_BASE = 0
 else
-#TEXT_BASE = 0x10
-#TEXT_BASE = 0xFFFC0000
-TEXT_BASE = 0x0
+TEXT_BASE = 0x10
 endif
 
 # An hard overload :(

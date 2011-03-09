@@ -87,7 +87,6 @@
 
 tlbtab:
     tlbtab_start
-#if 0
 #ifndef CONFIG_BGP_KHVMM
 #if 0
      /* VU: this is currently unused, the code runs on the microloader mappings */
@@ -126,11 +125,6 @@ tlbtab:
     tlbentry (CFG_BGP_VA_SRAMERR,	SZ_1K,	CFG_BGP_PA_SRAMERR,	CFG_BGP_UA_SRAMERR,	AC_R|SA_G|SA_I)
 
     tlbentry (CFG_SDRAM_BASE,		SZ_1G, 	CFG_SDRAM_BASE,		0,			AC_R|AC_W|AC_X|SA_W)
-#endif
-#else
-	tlbentry( CFG_SDRAM_BASE, SZ_1G, CFG_SDRAM_BASE, 0, AC_R|AC_W|AC_X|SA_W)
-	tlbentry( CFG_MAILBOX_BASE, SZ_16K, CFG_FLASH_BASE, 0, AC_R|AC_W|AC_X)
-	tlbentry( CFG_MAILBOX_BASE + 0x4000, SZ_16K, CFG_FLASH_BASE + 0x4000, 0, AC_R|AC_W|AC_X)
 #endif
     tlbtab_end
 

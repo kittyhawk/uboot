@@ -124,7 +124,6 @@
         "printfdt=echo some information about the fdt; echo initial addr: $fdtdefaultaddr, bootaddr: $fdtbootaddr; echo contents:; fdt print /; echo end of fdt\0" \
 	""
 
-
 #endif
 
 #define CONFIG_BOOTP_MASK        CONFIG_BOOTP_DEFAULT
@@ -307,7 +306,7 @@
 
 #define CFG_BOOT_BASE_ADDR	0x00000000
 #define CFG_SDRAM_BASE		0x00000000
-#define CFG_FLASH_BASE		0xFFF80000
+#define CFG_FLASH_BASE		0xAFFF8000
 #define CFG_MONITOR_LEN		(256 * 1024)	/* Reserve 256 kB for Monitor	*/
 #define CFG_MALLOC_LEN		(128 * 1024)	/* Reserve 128 kB for malloc()	*/
 #define CFG_MONITOR_BASE	TEXT_BASE
