@@ -353,6 +353,7 @@ int do_uni2ip ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
     char *var;
     unsigned int uni;
+    unsigned int num_vms, vm_nr;
     char *startip, *endip;
     unsigned long sip, eip;
     unsigned char oc3, oc2, oc1, oc0;
@@ -361,8 +362,9 @@ int do_uni2ip ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     char ip[24];
     int rc;
 
-    if (argc != 5) {
+    if (argc != 7) {
         printf("Usage:\n%s\n", cmdtp->usage);
+        printf("actual argc %d\n",argc);
         return 1;
     }
 
@@ -370,6 +372,10 @@ int do_uni2ip ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     uni = simple_strtoul(argv[2], NULL, 10);
     startip = argv[3];
     endip = argv[4];
+
+	vm_nr = simple_strtoul(argv[5], NULL, 10);
+	num_vms = simple_strtoul(argv[6], NULL, 10);
+	uni = uni * num_vms + vm_nr;
 
     sip = string_to_ip(startip);
     eip = string_to_ip(endip);
@@ -390,7 +396,7 @@ int do_uni2ip ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 U_BOOT_CMD(
-        uni2ip,   5,   1, do_uni2ip,
+        uni2ip,   7,   1, do_uni2ip,
         "uni2ip  - sets var to an ipv4 address generated from uni between startip and endip \n",
         "var uni startip endip\n"
 );       

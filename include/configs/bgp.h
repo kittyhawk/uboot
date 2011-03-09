@@ -56,7 +56,6 @@
         "test -n $dostartscript && run dostartscript;" \
         "test -n $doramdisk && imi $ramfsaddr && run doramdisk;" \
         "test -n $donoramdisk && imi $ramfsaddr || run donoramdisk;" \
-        "run printfdt;" \
         "test -n $doionode && itest $bgp_isio == 1 && run doionode;" \
         "test -n $doboot && imi $loadaddr && unsilence && run doboot;" \
         "echo dropping to console && unsilence && test -n $donoboot && run donoboot"
@@ -105,8 +104,8 @@
           "argscriptaddr=0x100000\0" \
             "fdtbootaddr=0x1000000\0" \
         "startscriptaddr=0x1100000\0" \
-   	       "loadaddr=0x12000000\0" \
-              "ramfsaddr=0x13000000\0" \
+   	       "loadaddr=0x11000000\0" \
+              "ramfsaddr=0x12000000\0" \
              "initrdaddr=0x20000000\0" \
              "console=bgtty\0" \
         "dosetinitrd=setenv initrd_high $initrdaddr && echo dosetinitrd done\0" \
