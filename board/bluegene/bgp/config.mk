@@ -27,7 +27,7 @@ TEXT_BASE = 0x10
 
 # An hard overload :(
 PLATFORM_CPPFLAGS = -DCONFIG_PPC -D__powerpc__ -DCONFIG_4xx -ffixed-r2 \
-                    -ffixed-r29 -mstring -msoft-float -Wall -Werror
+                    -ffixed-r29 -mstring -msoft-float
 
 ifeq ($(findstring powerpc-bgp-linux-,$(CROSS_COMPILE)),powerpc-bgp-linux-)
 PLATFORM_CPPFLAGS += -mcpu=450fp2
