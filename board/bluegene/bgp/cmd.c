@@ -132,7 +132,8 @@ int do_eth_mketh ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     char torusphandle[80];
     int torusphandlelen = 0;
     void *data;
-
+    int vnic = 0;
+    
     if (argc < 3) {
         printf("Usage:\n%s\n", cmdtp->usage);
         return 1;
@@ -141,11 +142,14 @@ int do_eth_mketh ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     netid = simple_strtoul(argv[1], NULL, 10);
     ifindex = simple_strtoul(argv[2], NULL, 10);
     if (argc >= 3)
-	mtu = simple_strtoul(argv[3], NULL, 10);
+	mtu = simple_strtoul(argv[3], NULL, 10); 
+    if (argc >= 4 && netid >= 2)
+        vnic = !strncmp(argv[4], "vnic", 4);
 
     /* we rserve network id 0 for kittyhawk use               */
     /*                   id 1 for the external network        */ 
     /*                   id 2 for the internal public network */
+
     if (netid == 0) {
         printf("ERROR: netid=%d is reserved\n", netid);
         return 1;
@@ -201,6 +205,7 @@ int do_eth_mketh ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
         printf("ERROR: could not find /plb\n");
         return 1;
     }
+    
     sprintf(string, "ethernet@%d", ifindex);
     nodeoffset = fdt_add_subnode(fdt, nodeoffset, string);
     if (nodeoffset < 0) {
@@ -221,44 +226,96 @@ int do_eth_mketh ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
         }
     }
 
-    if ((err = fdt_setprop(fdt, nodeoffset, "network-id", &netid, sizeof(netid))) < 0) {
-        printf("ERROR: could not set network-id\n");
-        return 1;
-    }
+    if (!vnic)
+    {
+        if ((err = fdt_setprop(fdt, nodeoffset, "network-id", &netid, sizeof(netid))) < 0) {
+            printf("ERROR: could not set network-id\n");
+            return 1;
+        }
 
-    tmp = 0x1;
-    if ((err = fdt_setprop(fdt, nodeoffset, "link-protocol", &tmp, sizeof(tmp))) < 0) {
-        printf("ERROR: could not set link-protocol\n");
-        return 1;
-    }
+        tmp = 0x1;
+        if ((err = fdt_setprop(fdt, nodeoffset, "link-protocol", &tmp, sizeof(tmp))) < 0) {
+            printf("ERROR: could not set link-protocol\n");
+            return 1;
+        }
 
-    tmp = (netid == 1) ? 1 : 0;
-    if ((err = fdt_setprop(fdt, nodeoffset, "tree-channel", &tmp, sizeof(tmp))) < 0) {
-        printf("ERROR: could not set tree-channel\n");
-        return 1;
-    }
+        tmp = (netid == 1) ? 1 : 0;
+        if ((err = fdt_setprop(fdt, nodeoffset, "tree-channel", &tmp, sizeof(tmp))) < 0) {
+            printf("ERROR: could not set tree-channel\n");
+            return 1;
+        }
 
-    tmp = (netid == 1) ? 0x0 : 0xf;
-    if ((err = fdt_setprop(fdt, nodeoffset, "tree-route", &tmp, sizeof(tmp))) < 0) {
-        printf("ERROR: could not set tree-route\n");
-        return 1;
-    }
+        tmp = (netid == 1) ? 0x0 : 0xf;
+        if ((err = fdt_setprop(fdt, nodeoffset, "tree-route", &tmp, sizeof(tmp))) < 0) {
+            printf("ERROR: could not set tree-route\n");
+            return 1;
+        }
 
-    if ((err = fdt_setprop(fdt, nodeoffset, "tree-device", treephandle, treephandlelen)) < 0) {
-        printf("ERROR: could not set tree-device\n");
-        return 1;
-    }
+        if ((err = fdt_setprop(fdt, nodeoffset, "tree-device", treephandle, treephandlelen)) < 0) {
+            printf("ERROR: could not set tree-device\n");
+            return 1;
+        }
 
-    if (netid > 1) {
-	if ((err = fdt_setprop(fdt, nodeoffset, "torus-device", torusphandle, torusphandlelen)) < 0) {
-	    printf("ERROR: could not set torus-device (%s)\n", fdt_strerror(err));
-	    return 1;
-	}
-    }
+        if (netid > 1) {
+            if ((err = fdt_setprop(fdt, nodeoffset, "torus-device", torusphandle, torusphandlelen)) < 0) {
+                printf("ERROR: could not set torus-device (%s)\n", fdt_strerror(err));
+                return 1;
+            }
+        }
+        
+        if ((err = fdt_setprop(fdt, nodeoffset, "compatible", "ibm,kittyhawk", 14)) < 0) {
+            printf("ERROR: could not set compatible\n");
+            return 1;
+        }
 
-    if ((err = fdt_setprop(fdt, nodeoffset, "compatible", "ibm,kittyhawk", 14)) < 0) {
-        printf("ERROR: could not set compatible\n");
-        return 1;
+    }
+    else 
+    {
+        ulong interrupts = 0x110;
+        ulong reg[3] = { 0x00000007, 0x40000000, 0x00001000 };
+        int *bicref = 0;
+        int bic;
+        int biclen;
+            
+        if ((err = fdt_setprop(fdt, nodeoffset, "compatible", "ns83820", 7)) < 0) {
+            printf("ERROR: could not set compatible\n");
+            return 1;
+        }
+        
+        if ((err = fdt_setprop(fdt, nodeoffset, "interrupts", &interrupts, sizeof(interrupts))) < 0) {
+            printf("ERROR: could not set interrupts\n");
+            return 1;
+        }
+        
+  
+        bicref = fdt_getprop(fdt, fdt_path_offset(fdt, "/plb/torus"), "interrupt-parent", &biclen);
+        if (bicref == NULL || biclen != 4)
+        {
+            printf("ERROR: could not retrieve torus BIC reference\n");
+            return 1;
+        }
+        bic = *bicref;
+        
+        if ((err = fdt_setprop(fdt, nodeoffset, "interrupt-parent", &bic, biclen)) < 0) {
+            printf("ERROR: could not set BIC reference \n");
+            return 1;
+        }
+        
+        /* Remove TORUS entry */
+        if ((err = fdt_del_node(fdt, fdt_path_offset(fdt, "/plb/torus"))) < 0){
+            printf("ERROR: could not delete torus entry\n");
+            return 1;
+        }
+
+        
+        if ((err = fdt_setprop(fdt, nodeoffset, "reg", &reg, sizeof(reg))) < 0) {
+            printf("ERROR: could not set regs\n");
+            return 1;
+        }
+
+
+
+
     }
 
     if ((err = fdt_setprop(fdt, nodeoffset, "device_type", "network", 8)) < 0) {
@@ -286,9 +343,9 @@ int do_eth_mketh ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 U_BOOT_CMD(
-        mketh,   4,   1, do_eth_mketh,
+        mketh,   5,   1, do_eth_mketh,
         "mketh     - create a kittyhawk private ethernet fdt entry.\n",
-        "netid index [mtu]\n"
+        "netid index [mtu] [vnic]\n"
 );       
 
 
@@ -296,6 +353,13 @@ int do_uni2ip ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
     char *var;
     unsigned int uni;
+#ifdef CONFIG_BGP_KHVMM
+#define DO_UNI2IP_ARGS 7
+    unsigned int num_vms, vm_nr;
+#else
+#define DO_UNI2IP_ARGS 5
+   
+#endif
     char *startip, *endip;
     unsigned long sip, eip;
     unsigned char oc3, oc2, oc1, oc0;
@@ -304,7 +368,7 @@ int do_uni2ip ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     char ip[24];
     int rc;
 
-    if (argc != 5) {
+    if (argc != DO_UNI2IP_ARGS) {
         printf("Usage:\n%s\n", cmdtp->usage);
         return 1;
     }
@@ -313,6 +377,12 @@ int do_uni2ip ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     uni = simple_strtoul(argv[2], NULL, 10);
     startip = argv[3];
     endip = argv[4];
+
+#ifdef CONFIG_BGP_KHVMM
+    vm_nr = simple_strtoul(argv[5], NULL, 10);
+    num_vms = simple_strtoul(argv[6], NULL, 10);
+    uni = uni * num_vms + vm_nr;
+#endif
 
     sip = string_to_ip(startip);
     eip = string_to_ip(endip);
@@ -333,7 +403,7 @@ int do_uni2ip ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 U_BOOT_CMD(
-        uni2ip,   5,   1, do_uni2ip,
+        uni2ip,   DO_UNI2IP_ARGS,   1, do_uni2ip,
         "uni2ip  - sets var to an ipv4 address generated from uni between startip and endip \n",
         "var uni startip endip\n"
 );       

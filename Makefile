@@ -1044,6 +1044,10 @@ bamboo_config:	unconfig
 bgp_config: unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx bgp bluegene
 
+bgp_khvmm_config: unconfig
+	@$(MKCONFIG) $(@:_config=) ppc ppc4xx bgp bluegene
+	@echo "KHVMM = y" >> $(obj)include/config.mk
+
 bubinga_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx bubinga amcc
 
