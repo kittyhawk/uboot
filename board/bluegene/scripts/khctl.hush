@@ -1,6 +1,5 @@
 echo " --- KHCTL : Settings : BEGIN ---"
-setenv site watson
-itest $bgp_totalnodes > 512 && setenv site roch
+setenv site anl-surveyor
 
 setenv ioeth0ipaddr $bgp_ioeth_ip
 setenv ioeth0mask $bgp_ioeth_netmask
@@ -29,7 +28,7 @@ then
     setenv khctleth0ipaddr "$siteprefix.129.$bgp_blocknum"
   fi
   setenv khctleth0mask $sitemask
-  setenv khctlgateway $sitegateway
+  setenv khctlgateway $sitegate
   setenv khctlsiteconfig 1
 fi
 
@@ -43,7 +42,35 @@ then
 
   setenv khctleth0ipaddr "$siteprefix.128.$bgp_nodecard"
   setenv khctleth0mask $sitemask
-  setenv khctlgateway $sitegateway
+  setenv khctlgateway $sitegate
+  setenv khctlsiteconfig 1
+fi
+
+
+if test $site = "anl-surveyor"
+then
+  setenv siteprefix 172.16
+  setenv sitemask 255.240.0.0  
+  setenv sitegate 172.17.3.1
+  setenv sitexstart $siteprefix.7.18
+  setenv sitexend 172.16.255.255
+  
+# FIXME: khctleth0ipaddr is inconsistent across nodecards however
+#        it probably does not matter as we don't know of dependencies
+#        fix to ensure that all nodes see a globally consistent value 
+  if itest $bgp_totalnodes > 512
+  then
+      setenv khctleth0ipaddr "$siteprefix.5.$bgp_nodecard"
+  else
+    if test $bgp_midplane = "0"
+    then
+      setenv khctleth0ipaddr "$siteprefix.5.$bgp_nodecard"
+    else
+      setenv khctleth0ipaddr "$siteprefix.6.$bgp_nodecard"
+    fi
+  fi
+  setenv khctleth0mask $sitemask
+  setenv khctlgateway  $sitegate
   setenv khctlsiteconfig 1
 fi
 

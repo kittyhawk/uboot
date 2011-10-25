@@ -70,11 +70,12 @@
 #define CONFIG_LWIP_TCP         1
 #undef  CONFIG_LWIP_TCP
 
-//#define CONFIG_BGP_SYNCTBASES   1
-#undef  CONFIG_BGP_SYNCTBASES
 
 #ifndef CONFIG_BGP_KHVMM
-#define CONFIG_EXTRA_ENV_SETTINGS	\
+#define CONFIG_BGP_SYNCTBASES   1
+//#undef  CONFIG_BGP_SYNCTBASES
+
+#define CONFIG_EXTRA_ENV_SETTINGS    \
           "argscriptaddr=0x100000\0" \
             "fdtbootaddr=0x1000000\0" \
         "startscriptaddr=0x1100000\0" \
@@ -99,6 +100,8 @@
 	""
 
 #else
+//#define CONFIG_BGP_SYNCTBASES   1
+#undef  CONFIG_BGP_SYNCTBASES
 #define CONFIG_EXTRA_ENV_SETTINGS	\
           "argscriptaddr=0x10000000\0" \
             "fdtbootaddr=0x1000000\0" \
