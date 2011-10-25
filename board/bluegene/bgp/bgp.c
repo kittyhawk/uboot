@@ -66,11 +66,7 @@ static cns_descriptor_t *cns_descriptor;
 
 static int running_on_cns(void)
 {
-#ifndef CONFIG_BGP_KHVMM
-    return 0;
-#else
     return 1;
-#endif
 }
 
 static int valid_cns_descriptor(cns_descriptor_t *desc)

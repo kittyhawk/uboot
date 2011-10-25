@@ -652,15 +652,11 @@ void irq_install_handler (int vec, interrupt_handler_t * handler, void *arg)
 		mtdcr (uic2er, mfdcr (uic2er) | (0x80000000 >> i));
 	else
 #endif /* CONFIG_440GX */
-#ifndef CONFIG_BGP
 	if (vec > 31)
 		mtdcr (uic1er, mfdcr (uic1er) | (0x80000000 >> i));
 	else
-#endif /* CONFIG_BGP */
-#endif /* CONFIG_440 */
-#ifndef CONFIG_BGP
+#endif
 		mtdcr (uicer, mfdcr (uicer) | (0x80000000 >> i));
-#endif /* CONFIG_BGP */
 #if 0
 	printf ("Install interrupt for vector %d ==> %p\n", vec, handler);
 #endif
@@ -710,9 +706,9 @@ void irq_free_handler (int vec)
 	if (vec > 31)
 		mtdcr (uic1er, mfdcr (uic1er) & ~(0x80000000 >> i));
 	else
+#endif
 		mtdcr (uicer, mfdcr (uicer) & ~(0x80000000 >> i));
 #endif /* CONFIG_BGP */
-#endif /* CONFIG_440 */
 
 	irqa[i].handler = NULL;
 	irqa[i].arg = NULL;
