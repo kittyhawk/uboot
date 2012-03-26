@@ -1,5 +1,5 @@
 echo " --- KHCTL : Settings : BEGIN ---"
-setenv site anl-surveyor
+setenv site anl-challenger
 
 setenv ioeth0ipaddr $bgp_ioeth_ip
 setenv ioeth0mask $bgp_ioeth_netmask
@@ -55,20 +55,35 @@ then
   setenv sitexstart $siteprefix.7.18
   setenv sitexend 172.16.255.255
   
-# FIXME: khctleth0ipaddr is inconsistent across nodecards however
-#        it probably does not matter as we don't know of dependencies
-#        fix to ensure that all nodes see a globally consistent value 
-  if itest $bgp_totalnodes > 512
-  then
-      setenv khctleth0ipaddr "$siteprefix.5.$bgp_nodecard"
-  else
-    if test $bgp_midplane = "0"
-    then
-      setenv khctleth0ipaddr "$siteprefix.5.$bgp_nodecard"
-    else
-      setenv khctleth0ipaddr "$siteprefix.6.$bgp_nodecard"
-    fi
-  fi
+  uni2ip khctleth0ipaddr $uni $sitexstart $sitexend || echo "ERROR: Failed to set xip from $uni $sitexstart $sitexend"
+  setenv khctleth0mask $sitemask
+  setenv khctlgateway  $sitegate
+  setenv khctlsiteconfig 1
+fi
+
+if test $site = "anl-challenger"
+then
+  setenv siteprefix 172.16
+  setenv sitemask 255.240.0.0  
+  setenv sitegate 172.17.3.1
+  setenv sitexstart $siteprefix.7.18
+  setenv sitexend 172.16.12.17
+  
+  uni2ip khctleth0ipaddr $uni $sitexstart $sitexend || echo "ERROR: Failed to set xip from $uni $sitexstart $sitexend"
+  setenv khctleth0mask $sitemask
+  setenv khctlgateway  $sitegate
+  setenv khctlsiteconfig 1
+fi
+
+if test $site = "anl-intrepid"
+then
+  setenv siteprefix 172.16
+  setenv sitemask 255.240.0.0  
+  setenv sitegate 172.17.3.1
+  setenv sitexstart $siteprefix.12.18
+  setenv sitexend 172.16.255.255
+  
+  uni2ip khctleth0ipaddr $uni $sitexstart $sitexend || echo "ERROR: Failed to set xip from $uni $sitexstart $sitexend"
   setenv khctleth0mask $sitemask
   setenv khctlgateway  $sitegate
   setenv khctlsiteconfig 1
