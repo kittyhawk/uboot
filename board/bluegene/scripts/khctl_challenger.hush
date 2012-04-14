@@ -10,7 +10,7 @@ setenv demoenv 1
 
 setenv xprefix 192.168
 setenv xmask 255.255.0.0
-setenv xstart $xprefix.0.0
+setenv xstart $xprefix.0.1
 setenv xend $xprefix.127.255
   
 uni2ip xip $uni $xstart $xend || echo "ERROR: Failed to set xip from $uni $xstart $xend"
