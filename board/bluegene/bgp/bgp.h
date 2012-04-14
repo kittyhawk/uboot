@@ -543,4 +543,7 @@ int write_ras_event(unsigned facility, unsigned unit, unsigned short errcode,
 
 int is_ionode(void);
 
+typedef unsigned char ctl_packet_t[240];
+int bg_tree_ctl_send(ctl_packet_t *cpkt, unsigned int route);
+int bg_tree_ctl_recv(ctl_packet_t *cpkt);
 #endif /* !__BOARD__BLUEGENE__BGP__BGP_H__ */

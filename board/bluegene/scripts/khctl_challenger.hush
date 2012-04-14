@@ -1,0 +1,100 @@
+setenv site anl-challenger
+
+echo " --- KHCTL $site : Settings : BEGIN ---"
+
+# on challenger we do not use bridging but only nat 
+setenv natip $ionode_siteip
+
+# we set demoenv as old kludges for ip address assignment to work
+setenv demoenv 1
+
+setenv xprefix 192.168
+setenv xmask 255.255.0.0
+setenv xstart $xprefix.0.0
+setenv xend $xprefix.127.255
+  
+uni2ip xip $uni $xstart $xend || echo "ERROR: Failed to set xip from $uni $xstart $xend"
+
+setenv khctlnoderank 0
+
+if itest $bgp_isio == 1
+then
+# IO NODE SETTINGS
+     
+   # NETWORKING 
+     # setting for io nodes site network connection
+     setenv siteif eth0
+     setenv sitegate $bgp_ioeth_gateway
+     setenv siteipaddr $bgp_ioeth_ip
+     setenv sitemask $bgp_ioeth_netmask
+     setenv sitenfsserver $bgp_ioeth_nfsserver
+
+     # settings for io nodes connection to KH external network domain (netid=1)
+     fdt set /plb/ethernet@0 tree-channel "[0 0 0 1]"
+     setenv xif eth1
+
+     # On challenger we do not have ip addresses to use so we do not bridge the kh external network domain to the 
+     # site network.  Rather we have each io node act as a nat for its associated compute nodes
+     setenv eth1 "$xip $xmask"
+     setenv donat "$siteif $xif"
+
+   # BOOT SETTING
+   setenv setenv doboot run boot
+   setenv doionode "setenv bootargs console=bgcons ip=$siteipaddr:$sitenfsserver:$sitegate:$sitemask::$siteif:off khbr=off init=/init; echo doionode done"
+
+else
+# COMPUTE NODE SETTING
+
+  # NETWORKING
+    # default KH external network domain settings for a compute node
+    uni2ip xgate $ionode_uni $xstart $xend || echo "ERROR: Failed to set xgate from $ionode_uni $xstart $xend"
+    setenv xboot 'setenv ramfsarg $ramfsaddr && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest init=/init ip=$xip::$xgate:$xmask::eth0:off khbr=off'
+
+    # A default KH internal public settings (netid=2)
+    setenv iip $ipaddr
+    setenv imask $netmask
+    setenv iboot 'setenv ramfsarg $ramfsaddr && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest init=/init ip=$iip:::$imask::eth0:off khbr=off'
+
+    # some default private network settings for you convenience
+    uni2ip p0ip $bgp_rank 192.168.128.1 192.168.255.255
+    setenv p0mask 255.255.0.0
+    setenv p0gate 192.168.128.0
+    setenv p0boot 'setenv ramfsarg $ramfsaddr && setenv bootargs console=bgtty0,$bgtty_sendid,$bgtty_rcvid,$bgtty_dest init=/init ip=$p0ip::$p0gate:$p0mask::eth0:off khbr=off'
+
+  # DEFAULT BOOT:  Constructs logic to boot with network precedence for eth0 to be x, i, p
+  setenv dosetxtmpboot 'test -n $bg_eth0_netid && test $bg_eth0_netid = "1" && setenv eth0ip $xip && setenv tmpboot "run xboot && run boot"'
+  setenv dosetitmpboot 'test -n $bg_eth0_netid && test $bg_eth0_netid = "2" && setenv eth0ip $iip && setenv tmpboot "run iboot && run boot"'
+  setenv dosetptmpboot 'test -n $bg_eth0_netid && setenv eth0ip $p0ip && setenv tmpboot "run p0boot && run boot"' 
+  setenv dosettmpboot "run dosetxtmpboot || run dosetitmpboot || run dosetptmpboot"   
+  setenv kboot 'run dosettmpboot; test -n $tmpboot && run tmpboot'
+
+  # By default compute nodes do not boot automatically rather stay in u-boot until told to boot
+  setenv doramdisk
+
+  # all compute nodes should configure their consoles to the khctlserver
+  setenv bgtty_dest $khctlnoderank
+
+  if itest $bgp_rank == $khctlnoderank
+  then
+  # SPECIAL SETTINGS FOR KHCTL SERVER
+
+    mketh 2 1
+    mketh 1 0 
+    fdt print /plb/ethernet@0
+
+    setenv khctliif eth1    
+    setenv khctlxif eth0
+
+    setenv ramfsarg $ramfsaddr
+    setenv bootargs console=bgcons init=/init ip=$xip::$xgate:$xmask::$khctlxif:off khbr=off
+    setenv eth0 "$xip $xmask"   
+    setenv eth1 "$iip $imask"
+    setenv doramdisk run boot
+    unsilence
+     echo "KHCTL : setup for $site : khctl @ $ionode_siteip netmask $xmask gateway $xgate $xip  $ionode_siteip"
+    silence
+  fi
+fi
+
+echo " --- KHCTL : Settings : END ---"
+

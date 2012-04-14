@@ -1703,6 +1703,63 @@ syncTimeBases(u32 *beforeu, u32 *beforel, u32 *middleu, u32 *middlel, u32 *after
     return 1;
 }
 
+static int 
+exchange_ionode_info(void)
+{
+    ctl_packet_t cpkt;    
+    struct ionodeinfo {
+	unsigned int uni;
+	bgp_ipaddr_t ip;
+    } *ionodeinfo = (struct ionodeinfo *)&cpkt;
+    
+    // following block uses the kh ctl link protocol and tree route
+    // that connects an io node to its compute nodes to let all the
+    // compute nodes know info of their io nodes via a tree broadcast
+    
+    if ( sizeof(struct ionodeinfo) > sizeof(ctl_packet_t) ) {
+	printf("ERROR: sizeof(struct ionodeinfo) >  sizeof(ctl_packet_t)"
+	       ": not sending ionodeinfo\n");
+	return 0;
+    }
+    memset(&cpkt, 0, sizeof(ctl_packet_t));
+    
+    if (is_ionode()) {
+	bgp_personality_t *pers = (bgp_personality_t*)BGP_PERS_BASE;
+	ionodeinfo->uni = bg_uci_to_uni((BGP_UCI_ComputeCard_t *)
+					&(pers->kernel.uci));
+	ionodeinfo->ip  = pers->eth.ip;
+	
+	printf("io node sending uni=0x%x\n", ionodeinfo->uni);
+	bg_tree_ctl_send(&cpkt, 0);  // IBM MAGIC ROUTE TO IONODES COMPUTE NODES
+    } else {
+	int done = 0;
+	while (!done) {
+	    int i;
+	    printf("compute node waiting for io node info\n");
+	    for (i=0; i<100000; i++) {
+		if (bg_tree_ctl_recv(&cpkt)) {
+		    char tmp[80];
+		    printf("compute node got io node info: uni=0x%x ip=%d.%d.%d.%d\n", 
+			   ionodeinfo->uni, ionodeinfo->ip.octet[12], ionodeinfo->ip.octet[13], 
+			   ionodeinfo->ip.octet[14], ionodeinfo->ip.octet[15]);
+
+		    sprintf(tmp, "%d", ionodeinfo->uni);
+		    setenv("ionode_uni", tmp);
+
+		    sprintf(tmp, "%d.%d.%d.%d",
+			    ionodeinfo->ip.octet[12], ionodeinfo->ip.octet[13], 
+			    ionodeinfo->ip.octet[14], ionodeinfo->ip.octet[15]);
+		    setenv("ionode_siteip", tmp);
+
+		    done=1; 
+		    break; 
+		}
+	    }
+	}
+    }
+    return 1;
+}
+
 extern void * dt_header;
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1733,10 +1790,10 @@ int last_stage_init(void)
     {
         u32 beforeu, beforel, middleu, middlel, afteru, afterl;
         syncTimeBases(&beforeu, &beforel, &middleu, &middlel, &afteru, &afterl);
-        mailbox_unsilence();
+//        mailbox_unsilence();
         printf("syncTimeBases: beforeu=%x:%x, middle=%x:%x after=%x:%x\n", beforeu, beforel, 
                middleu, middlel, afteru, afterl);
-        mailbox_silence();
+//        mailbox_silence();
     }
 #endif
 
@@ -1744,8 +1801,15 @@ int last_stage_init(void)
     // default state
     global_int_disable_all();
 
+    {
+//	mailbox_unsilence();	
+	exchange_ionode_info();
+//      mailbox_silence();
+    }
+
     return 0;
 }
+
 
 void release_app_processors(void (*kernel)(void))
 {

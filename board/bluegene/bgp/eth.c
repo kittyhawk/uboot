@@ -92,7 +92,6 @@ struct bglink_hdr
     };
 } __attribute__((packed));
 
-
 struct bg_tree {
     unsigned int curr_conn;
     unsigned int nodeid;
@@ -112,6 +111,7 @@ struct bg_tree_eth {
 #define TREE_IRQMASK_REC	(3)
 #define TREE_ETH		1
 #define TREE_TTY		16
+#define TREE_CTL                32
 
 #define TREE_FRAGPAYLOAD	(TREE_PAYLOAD - sizeof(struct bglink_hdr))
 
@@ -190,6 +190,7 @@ static void bg_tree_disable_irqs(struct eth_device *dev)
 }
 #endif
 
+
 static void bg_tree_transmit(union bgtree_header dest, struct bglink_hdr *lnkhdr, 
 			    int chnidx, void *data, int len)
 {
@@ -256,6 +257,38 @@ static void bg_tree_transmit(union bgtree_header dest, struct bglink_hdr *lnkhdr
     }
 
  out:;
+}
+
+
+int
+bg_tree_ctl_send(ctl_packet_t *cpkt,  unsigned int route)
+{
+    static struct bglink_hdr ctl_send_lnkhdr __attribute__((aligned(16)));
+    static ctl_packet_t data;
+    union bgtree_header dest;
+   
+    if (sizeof(ctl_packet_t) != TREE_FRAGPAYLOAD) {
+	mb_printf("ERROR: bg_tree_ctl_send: sizeof(ctl_packet_t) != TREE_FRAGPAYLOAD\n");
+	return -1;
+    }
+
+    memset(&ctl_send_lnkhdr, 0, sizeof(ctl_send_lnkhdr));
+
+    dest.raw = 0;
+
+    dest.p2p.pclass = route;
+    dest.bcast.tag = 0;
+    
+    ctl_send_lnkhdr.dst_key = 0;
+    ctl_send_lnkhdr.src_key = tree.nodeid;
+    ctl_send_lnkhdr.lnk_proto = TREE_CTL;
+
+    memcpy(&data, cpkt, sizeof(ctl_packet_t));
+    bg_tree_transmit(dest, 
+		     &ctl_send_lnkhdr, 
+		     0,                        // channel index
+		     data,  sizeof(ctl_packet_t));
+    return sizeof(ctl_packet_t);
 }
 
 static void bg_tree_receive(int chnidx)
@@ -389,6 +422,30 @@ static void bg_tree_receive(int chnidx)
 	    status.raw = in_be32((unsigned*)(ioaddr + BGP_TRx_Sx));
     }
 
+}
+
+int
+bg_tree_ctl_recv(ctl_packet_t *cpkt)
+{
+    int flags, i, n=0;
+    flags = disable_interrupts();
+
+    for (i = 0; i < PACKET_BUF_SIZE; i++)
+	if (packet_buffer[i].lnk.total_pkt != 0 &&
+	    packet_buffer[i].lnk.total_pkt == packet_buffer[i].lnk.this_pkt &&
+            packet_buffer[i].lnk.lnk_proto == TREE_CTL &&
+            packet_buffer[i].lnk.dst_key == 0)
+            
+	{
+	    n  = packet_buffer[i].lnk.total_pkt * TREE_FRAGPAYLOAD; 
+	    if (n != sizeof(ctl_packet_t)) mb_printf("ERROR: bg_tree_ctl_recv: n != sizeof(ctl_packet_t)\n");
+	    memcpy(cpkt, packet_buffer[i].data, n);
+	    packet_buffer[i].lnk.total_pkt = 0;
+	}
+
+    if (flags)
+	enable_interrupts();
+    return n;
 }
 
 int bg_tree_interrupt (struct eth_device *dev)
